@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const categories = ['Herbs', 'Oils', 'Supplements', 'Tea', 'Skincare'];
 const featured = [
@@ -26,6 +27,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
 
   return (
+   
     <ScrollView contentContainerStyle={styles.container}>
       {/* ✅ Search Bar */}
       <TextInput
@@ -73,6 +75,7 @@ export default function Home() {
         <Text style={styles.poojaButtonText}>Book a Pooja Service</Text>
       </Pressable>
     </ScrollView>
+   
   );
 }
 

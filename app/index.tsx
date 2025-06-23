@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 
 export default function Splash() {
@@ -15,12 +15,27 @@ export default function Splash() {
     <View style={styles.container}>
       <Image source={require('../assets/images/ayush-icon.png')} style={styles.icon} />
       <Text style={styles.text}>Ayush</Text>
+      <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  icon: { width: 120, height: 120, marginBottom: 20 },
-  text: { fontSize: 32, fontWeight: 'bold', color: '#4CAF50' },
+  container: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#F0F0EF' 
+  },
+  icon: { 
+    width: 120, 
+    height: 120, 
+    marginBottom: 20, 
+    borderRadius:40
+  },
+  text: { 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    color: 'black' 
+  },
 });

@@ -1,9 +1,11 @@
 import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 function AppHeader() {
   return (
+    <SafeAreaView>
     <View style={styles.header}>
       <Text style={styles.logo}>Ayush</Text>
 
@@ -16,12 +18,14 @@ function AppHeader() {
         </Pressable>
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 export default function TabsLayout() {
   return (
     <>
+    
       <AppHeader />
 
       <Tabs
