@@ -1,122 +1,33 @@
-import { Tabs, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Slot } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AppHeader from '../../components/AppHeader';
+import CustomTabBar from '../../components/CustomTabBar';
 
-function AppHeader() {
+export default function TabsLayout() {
   return (
-    <SafeAreaView>
-    <View style={styles.header}>
-      <Text style={styles.logo}>Ayush</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* ✅ Custom App Header */}
+      <AppHeader />
 
-      <View style={styles.icons}>
-        <Pressable onPress={() => router.push('/(tabs)/cart')}>
-          <Ionicons name="cart-outline" size={24} color="#333" style={styles.icon} />
-        </Pressable>
-        <Pressable onPress={() => router.push('/(tabs)/profile')}>
-          <Ionicons name="person-circle-outline" size={28} color="#333" style={styles.icon} />
-        </Pressable>
+      {/* ✅ This renders the active tab screen */}
+      <View style={styles.content}>
+        <Slot />
       </View>
-    </View>
+
+      {/* ✅ Custom Bottom Bar */}
+      <CustomTabBar />
     </SafeAreaView>
   );
 }
 
-export default function TabsLayout() {
-  return (
-    <>
-    
-      <AppHeader />
-
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: '#4CAF50',
-          tabBarStyle: {
-            height: 60,
-            paddingBottom: 6,
-            paddingTop: 6,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="products"
-          options={{
-            title: 'Products',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="pricetag-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="pooja-booking"
-          options={{
-            title: 'Pooja',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: 'Orders',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="list-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
-  header: {
-    height: 60,
+  container: {
+    flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    elevation: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  logo: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#4CAF50',
-  },
-  icons: {
-    flexDirection: 'row',
-  },
-  icon: {
-    marginLeft: 20,
+  content: {
+    flex: 1,
+    // Note: no paddingTop here — header is outside Slot already!
   },
 });

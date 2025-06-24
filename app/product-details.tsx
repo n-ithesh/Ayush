@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const product = {
   name: 'Ashwagandha',
@@ -51,67 +52,73 @@ export default function ProductDetails() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Product Image */}
-        <Image source={{ uri: product.image }} style={styles.image} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Product Image */}
+          <Image source={{ uri: product.image }} style={styles.image} />
 
-        {/* Product Name & Price */}
-        <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.price}>{product.price}</Text>
+          {/* Product Name & Price */}
+          <Text style={styles.name}>{product.name}</Text>
+          <Text style={styles.price}>{product.price}</Text>
 
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          {['Description', 'Benefits', 'Usage'].map((label) => (
-            <Pressable
-              key={label}
-              style={[styles.tabButton, tab === label && styles.tabButtonActive]}
-              onPress={() => setTab(label as any)}
-            >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  tab === label && styles.tabButtonTextActive,
-                ]}
+          {/* Tabs */}
+          <View style={styles.tabs}>
+            {['Description', 'Benefits', 'Usage'].map((label) => (
+              <Pressable
+                key={label}
+                style={[styles.tabButton, tab === label && styles.tabButtonActive]}
+                onPress={() => setTab(label as any)}
               >
-                {label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    tab === label && styles.tabButtonTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
-        {/* Tab Content */}
-        <View style={styles.tabContent}>{renderTabContent()}</View>
+          {/* Tab Content */}
+          <View style={styles.tabContent}>{renderTabContent()}</View>
 
-        {/* Related Products */}
-        <Text style={styles.heading}>Related Products</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {relatedProducts.map((rp) => (
-            <View key={rp.id} style={styles.relatedCard}>
-              <Image source={{ uri: rp.image }} style={styles.relatedImage} />
-              <Text style={styles.relatedName}>{rp.name}</Text>
-            </View>
-          ))}
+          {/* Related Products */}
+          <Text style={styles.heading}>Related Products</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {relatedProducts.map((rp) => (
+              <View key={rp.id} style={styles.relatedCard}>
+                <Image source={{ uri: rp.image }} style={styles.relatedImage} />
+                <Text style={styles.relatedName}>{rp.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </ScrollView>
-      </ScrollView>
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <Pressable style={styles.addToCart} onPress={handleAddToCart}>
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </Pressable>
-        <Pressable style={styles.buyNow} onPress={handleBuyNow}>
-          <Text style={styles.buyNowText}>Buy Now</Text>
-        </Pressable>
+        {/* Action Buttons */}
+        <View style={styles.actions}>
+          <Pressable style={styles.addToCart} onPress={handleAddToCart}>
+            <Text style={styles.addToCartText}>Add to Cart</Text>
+          </Pressable>
+          <Pressable style={styles.buyNow} onPress={handleBuyNow}>
+            <Text style={styles.buyNowText}>Buy Now</Text>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     padding: 16,
-    paddingBottom: 100, // so content won't hide behind buttons
+    paddingBottom: 120, // enough space for sticky buttons
   },
   image: {
     width: '100%',

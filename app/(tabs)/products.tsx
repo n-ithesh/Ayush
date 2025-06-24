@@ -55,7 +55,7 @@ export default function Products() {
   const renderProduct = ({ item }: { item: any }) => (
     <Pressable
       style={isGrid ? styles.gridCard : styles.listCard}
-      onPress={() => router.push('/(tabs)/product-details')}
+      onPress={() => router.push('/product-details')}
     >
       <Image source={{ uri: item.image }} style={isGrid ? styles.gridImage : styles.listImage} />
       <View style={styles.cardContent}>
