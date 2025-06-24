@@ -12,12 +12,16 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
+import AshwagandhaImage from '../../assets/images/ashwagandha-powder.png';
+import NeemOilImage from '../../assets/images/neem-oil.png';
+import AloeVeraGelImage from '../../assets/images/aloeveragel.png';
+import TulsiTeaImage from '../../assets/images/Tulsi-Tea.png';
 
 const allProducts = [
-  { id: '1', name: 'Ashwagandha', price: '₹250', image: 'https://via.placeholder.com/150' },
-  { id: '2', name: 'Neem Oil', price: '₹150', image: 'https://via.placeholder.com/150' },
-  { id: '3', name: 'Tulsi Tea', price: '₹180', image: 'https://via.placeholder.com/150' },
-  { id: '4', name: 'Aloe Vera Gel', price: '₹200', image: 'https://via.placeholder.com/150' },
+  { id: '1', name: 'Ashwagandha', price: '₹250', image: AshwagandhaImage },
+  { id: '2', name: 'Neem Oil', price: '₹150', image: NeemOilImage },
+  { id: '3', name: 'Tulsi Tea', price: '₹180', image: 'Tulsi-TeaImage' },
+  { id: '4', name: 'Aloe Vera Gel', price: '₹200', image: AloeVeraGelImage },
 ];
 
 const { width } = Dimensions.get('window');
@@ -53,17 +57,21 @@ export default function Products() {
   };
 
   const renderProduct = ({ item }: { item: any }) => (
-    <Pressable
-      style={isGrid ? styles.gridCard : styles.listCard}
-      onPress={() => router.push('/product-details')}
-    >
-      <Image source={{ uri: item.image }} style={isGrid ? styles.gridImage : styles.listImage} />
-      <View style={styles.cardContent}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productPrice}>{item.price}</Text>
-      </View>
-    </Pressable>
-  );
+  <Pressable
+    style={isGrid ? styles.gridCard : styles.listCard}
+    onPress={() => router.push('/product-details')}
+  >
+    <Image
+      source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+      style={isGrid ? styles.gridImage : styles.listImage}
+    />
+    <View style={styles.cardContent}>
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productPrice}>{item.price}</Text>
+    </View>
+  </Pressable>
+);
+
 
   return (
     <View style={styles.container}>

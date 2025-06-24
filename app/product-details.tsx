@@ -10,9 +10,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import AshwagandhaImage from '../assets/images/ashwagandha-powder.png';
+import NeemOilImage from '../assets/images/neem-oil.png';
+import AloeVeraGelImage from '../assets/images/aloeveragel.png';
+import TulsiTeaImage from '../assets/images/Tulsi-Tea.png';
+
 const product = {
   name: 'Ashwagandha',
-  image: 'https://via.placeholder.com/300',
+  image: AshwagandhaImage,
   description: 'Ashwagandha is an ancient medicinal herb with multiple health benefits...',
   benefits: 'Reduces stress and anxiety, boosts energy, improves concentration.',
   usage: 'Take 1-2 capsules daily after meals or as directed by your physician.',
@@ -20,9 +25,9 @@ const product = {
 };
 
 const relatedProducts = [
-  { id: '1', name: 'Tulsi Tea', image: 'https://via.placeholder.com/120' },
-  { id: '2', name: 'Neem Oil', image: 'https://via.placeholder.com/120' },
-  { id: '3', name: 'Aloe Vera Gel', image: 'https://via.placeholder.com/120' },
+  { id: '1', name: 'Tulsi Tea', image:TulsiTeaImage },
+  { id: '2', name: 'Neem Oil', image:NeemOilImage },
+  { id: '3', name: 'Aloe Vera Gel', image:AloeVeraGelImage },
 ];
 
 export default function ProductDetails() {
@@ -56,7 +61,9 @@ export default function ProductDetails() {
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView contentContainerStyle={styles.container}>
           {/* Product Image */}
-          <Image source={{ uri: product.image }} style={styles.image} />
+         <Image source={typeof product.image === 'string' ? { uri: product.image } : product.image}
+              style={styles.image}
+            />
 
           {/* Product Name & Price */}
           <Text style={styles.name}>{product.name}</Text>
@@ -90,7 +97,10 @@ export default function ProductDetails() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {relatedProducts.map((rp) => (
               <View key={rp.id} style={styles.relatedCard}>
-                <Image source={{ uri: rp.image }} style={styles.relatedImage} />
+                <Image source={typeof rp.image === 'string' ? { uri: rp.image } : rp.image}
+                      style={styles.relatedImage}
+                    />
+
                 <Text style={styles.relatedName}>{rp.name}</Text>
               </View>
             ))}
