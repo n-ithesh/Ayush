@@ -1,14 +1,15 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  Alert,
   FlatList,
   Pressable,
+  ScrollView,
+  StyleSheet,
   Switch,
-  Alert,
+  Text,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
 
 // Mock user data
 const user = {
@@ -36,10 +37,11 @@ export default function Profile() {
 
   const handleLogout = () => {
     Alert.alert('Logged Out', 'You have been logged out.');
-    router.replace('./auth/login');
+    router.replace('../onboarding');
   };
 
   return (
+    <ScrollView>
     <View style={styles.container}>
       <Text style={styles.heading}>My Profile</Text>
 
@@ -60,10 +62,12 @@ export default function Profile() {
             <Text>{item}</Text>
           </View>
         )}
+        ListHeaderComponent={() => (
+          <Pressable style={styles.addBtn}>
+            <Text style={styles.addBtnText}>+ Add New Address</Text>
+          </Pressable>
+        )}
       />
-      <Pressable style={styles.addBtn}>
-        <Text style={styles.addBtnText}>+ Add New Address</Text>
-      </Pressable>
 
       {/* Order History */}
       <Text style={styles.sectionTitle}>Order History</Text>
@@ -98,6 +102,7 @@ export default function Profile() {
         <Text style={styles.logoutText}>Logout</Text>
       </Pressable>
     </View>
+    </ScrollView>
   );
 }
 

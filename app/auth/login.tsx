@@ -1,22 +1,40 @@
-// app/auth/login.tsx
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { apiPost, saveToken } from '../../utils/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password.');
       return;
     }
 
+    // Admin shortcut login
     if (email === 'admin@ayush.com' && password === 'admin123') {
       router.replace('/admin/dashboard');
-    } else {
-      router.replace('(tabs)/home');
+      return;
+    }
+
+    try {
+      const data = await apiPost('/auth/login', { email, password });
+
+      if (data.token) {
+        await saveToken(data.token);
+        Alert.alert('Success', 'Logged in!');
+        router.replace('/(tabs)/home');
+      } else if (data.msg === 'User not found') {
+        Alert.alert('Account Not Found', 'You don’t have an account. Please register.');
+      } else if (data.msg === 'Invalid password') {
+        Alert.alert('Incorrect Password', 'The password is incorrect. Please try again.');
+      } else {
+        Alert.alert('Error', data.msg || 'Login failed.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Network or server error.');
     }
   };
 
@@ -102,4 +120,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

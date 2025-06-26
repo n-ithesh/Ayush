@@ -3,9 +3,11 @@ import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import CustomTabBar from '../../components/CustomTabBar';
+import ScreenWrapper from '../../components/ui/ScreenWrapper';
 
 export default function TabsLayout() {
   return (
+    
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* ✅ Custom App Header */}
       <AppHeader />

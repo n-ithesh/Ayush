@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 // ✅ Proper static imports for local images:
 import AshwagandhaImage from '../../assets/images/ashwagandha-powder.png';
 import NeemOilImage from '../../assets/images/neem-oil.png';
