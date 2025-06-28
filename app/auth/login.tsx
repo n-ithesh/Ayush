@@ -13,28 +13,24 @@ export default function Login() {
       return;
     }
 
-    // Admin shortcut login
+    // Admin Shortcut
     if (email === 'admin@ayush.com' && password === 'admin123') {
       router.replace('/admin/dashboard');
       return;
     }
 
-    try {
-      const data = await apiPost('/auth/login', { email, password });
+    const data = await apiPost('/auth/login', { email, password });
 
-      if (data.token) {
-        await saveToken(data.token);
-        Alert.alert('Success', 'Logged in!');
-        router.replace('/(tabs)/home');
-      } else if (data.msg === 'User not found') {
-        Alert.alert('Account Not Found', 'You don’t have an account. Please register.');
-      } else if (data.msg === 'Invalid password') {
-        Alert.alert('Incorrect Password', 'The password is incorrect. Please try again.');
-      } else {
-        Alert.alert('Error', data.msg || 'Login failed.');
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Network or server error.');
+    if (data.success && data.token) {
+      await saveToken(data.token);
+      Alert.alert('Success', 'Logged in successfully!');
+      router.replace('/(tabs)/home');
+    } else if (data.msg === 'User not found') {
+      Alert.alert('Account Not Found', 'You don’t have an account. Please register.');
+    } else if (data.msg === 'Invalid password') {
+      Alert.alert('Incorrect Password', 'The password you entered is incorrect.');
+    } else {
+      Alert.alert('Login Failed', data.msg || 'Something went wrong.');
     }
   };
 
@@ -50,6 +46,7 @@ export default function Login() {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        keyboardType="email-address"
       />
 
       <TextInput

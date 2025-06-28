@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ✅ Use your system's IP (found via `ipconfig`) — required for mobile to connect
-const BASE_URL = 'http://192.168.188.36:5000/api'; // 👈 Update with your correct local IP
+const BASE_URL = 'http://192.168.194.36:5000/api'; // ⚠️ Use your local IP
 
-// ✅ Save token securely
+// Save token to AsyncStorage
 export const saveToken = async (token: string) => {
   try {
     await AsyncStorage.setItem('authToken', token);
@@ -12,7 +11,7 @@ export const saveToken = async (token: string) => {
   }
 };
 
-// ✅ Get token for authenticated requests
+// Retrieve token
 export const getToken = async () => {
   try {
     return await AsyncStorage.getItem('authToken');
@@ -22,7 +21,7 @@ export const getToken = async () => {
   }
 };
 
-// ✅ POST request (handles login, register, etc.)
+// POST API request
 export const apiPost = async (path: string, body: any, auth = false) => {
   const headers: any = {
     'Content-Type': 'application/json',
@@ -42,15 +41,82 @@ export const apiPost = async (path: string, body: any, auth = false) => {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.msg || 'Request failed');
-    }
-
-    return data;
+    return {
+      ...data,
+      success: response.ok,
+      status: response.status,
+    };
   } catch (error: any) {
     console.error('API POST error:', error.message);
-    throw new Error(error.message || 'Network/server error');
+    return {
+      success: false,
+      msg: 'Network error',
+    };
   }
 };
 
-// ✅ You can add GET, PUT, DELETE if needed later
+// ✅ NEW: GET API request
+export const apiGet = async (path: string, auth = false) => {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (auth) {
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: 'GET',
+      headers,
+    });
+
+    const data = await response.json();
+
+    return {
+      ...data,
+      success: response.ok,
+      status: response.status,
+    };
+  } catch (error: any) {
+    console.error('API GET error:', error.message);
+    return {
+      success: false,
+      msg: 'Network error',
+    };
+  }
+};
+
+// ✅ DELETE API request (used for deleting address)
+export const apiDelete = async (path: string, auth = false) => {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (auth) {
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    const data = await response.json();
+
+    return {
+      ...data,
+      success: response.ok,
+      status: response.status,
+    };
+  } catch (error: any) {
+    console.error('API DELETE error:', error.message);
+    return {
+      success: false,
+      msg: 'Network error',
+    };
+  }
+};

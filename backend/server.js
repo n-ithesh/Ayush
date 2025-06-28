@@ -7,19 +7,20 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
-// Middlewares
+// ✅ Middlewares
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // allow base64 images
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 
-// Connect DB + start server
+// ✅ Connect DB + start server
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
     app.listen(5000, '0.0.0.0', () => {
-      console.log('Server running...');
+      console.log('🚀 Server running on http://localhost:5000');
     });
   })
   .catch(err => console.error(err));
