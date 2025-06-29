@@ -157,6 +157,9 @@ exports.uploadProfilePicture = async (req, res) => {
   const userId = req.user.id;
   const { image } = req.body;
 
+  console.log('Upload request received for user:', userId); // Debug log
+  console.log('Image data length:', image ? image.length : 'No image'); // Debug log
+
   if (!image) {
     return res.status(400).json({ success: false, msg: 'No image provided' });
   }
@@ -167,6 +170,9 @@ exports.uploadProfilePicture = async (req, res) => {
 
     user.profilePicture = image;
     await user.save();
+
+    console.log('Profile picture saved successfully'); // Debug log
+    console.log('Updated user profilePicture field:', user.profilePicture ? 'Has data' : 'No data'); // Debug log
 
     res.json({ success: true, msg: 'Profile picture updated', profilePicture: image });
   } catch (error) {

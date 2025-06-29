@@ -43,8 +43,10 @@ export default function Profile() {
   const fetchProfile = async () => {
     try {
       const data = await apiGet('/auth/me', true);
+      console.log('Profile data received:', data);
       setUser(data);
       setProfileImage(data.profilePicture || null);
+      console.log('Profile picture set to:', data.profilePicture);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to load profile');
     } finally {
@@ -147,7 +149,7 @@ export default function Profile() {
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ updated to avoid deprecated API
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -156,10 +158,14 @@ export default function Profile() {
 
     if (!result.canceled && result.assets?.length) {
       const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      console.log('Uploading image, base64 length:', base64Img.length);
+      
       const res = await apiPost('/auth/upload-profile-picture', { image: base64Img }, true);
+      console.log('Upload response:', res);
+      
       if (res.success) {
-        fetchProfile();
         Alert.alert('Success', 'Profile picture updated.');
+        await fetchProfile();
       } else {
         Alert.alert('Error', res.msg || 'Upload failed');
       }
@@ -198,10 +204,10 @@ export default function Profile() {
             <Text style={styles.addressText}>{item}</Text>
             <View style={{ flexDirection: 'row', marginTop: 6 }}>
               <Pressable onPress={() => openEditAddress(index, item)}>
-                <Text style={[styles.editBtnText, { marginRight: 12 }]}>Edit</Text>
+                <Text style={[styles.editBtntext, { marginRight: 12 }]}>Edit</Text>
               </Pressable>
               <Pressable onPress={() => handleDeleteAddress(index)}>
-                <Text style={{ color: '#FF5252', fontWeight: '600' }}>Delete</Text>
+                <Text style={{ color: 'rgba(181, 21, 21, 0.5)', fontWeight: '600',}}>Delete</Text>
               </Pressable>
             </View>
           </View>
@@ -215,6 +221,7 @@ export default function Profile() {
                 <Image
                   source={profileImage ? { uri: profileImage } : require('../../assets/images/ayush-icon.png')}
                   style={styles.profileImage}
+                  onError={(error) => console.log('Image loading error:', error)}
                 />
                 <Text style={styles.changePhotoText}>Change Photo</Text>
               </Pressable>
@@ -394,12 +401,16 @@ const styles = StyleSheet.create({
   editBtn: {
     marginTop: 10,
     alignSelf: 'flex-end',
-    backgroundColor: '#2196F3',
+    backgroundColor: 'green',
     padding: 8,
     borderRadius: 6,
   },
   editBtnText: {
-    color: 'rgba(2, 4, 0, 0.68)',
+    color: 'rgb(253, 255, 251)',
+    fontWeight: '600',
+  },
+  editBtntext: {
+    color: 'rgba(2, 0, 16, 0.5)',
     fontWeight: '600',
   },
   modalOverlay: {
