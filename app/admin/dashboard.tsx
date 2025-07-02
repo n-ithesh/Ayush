@@ -1,11 +1,12 @@
-// app/admin/dashboard.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { apiGet } from '@/utils/api';
 
 export default function Dashboard() {
+  const [productCount, setProductCount] = useState(0);
+
   const mockStats = {
-    products: 120,
     orders: 45,
     revenue: 27500,
     lowStockAlerts: [
@@ -14,13 +15,28 @@ export default function Dashboard() {
     ],
   };
 
+  useEffect(() => {
+    fetchProductCount();
+  }, []);
+
+  const fetchProductCount = async () => {
+    try {
+      const res = await apiGet('/products');
+      if (res?.products) {
+        setProductCount(res.products.length);
+      }
+    } catch (err) {
+      console.error('Failed to load product count', err);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Admin Dashboard</Text>
 
       {/* Summary Cards */}
       <View style={styles.row}>
-        <StatCard icon={<Ionicons name="cube-outline" size={24} color="#fff" />} label="Products" value={mockStats.products} />
+        <StatCard icon={<Ionicons name="cube-outline" size={24} color="#fff" />} label="Products" value={productCount} />
         <StatCard icon={<FontAwesome5 name="shopping-cart" size={20} color="#fff" />} label="Orders" value={mockStats.orders} />
         <StatCard icon={<MaterialIcons name="attach-money" size={26} color="#fff" />} label="Revenue" value={`₹${mockStats.revenue}`} />
       </View>

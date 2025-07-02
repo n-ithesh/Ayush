@@ -1,6 +1,28 @@
-// app/admin/_layout.tsx
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Pressable, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const LogoutButton = () => (
+  <Pressable
+    onPress={async () => {
+      Alert.alert('Logout', 'Are you sure you want to logout?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('token'); // or your auth key
+            router.replace('../onboarding'); // navigate to login screen
+          },
+        },
+      ]);
+    }}
+    style={{ marginRight: 16 }}
+  >
+    <Ionicons name="log-out-outline" size={24} color="#00897b" />
+  </Pressable>
+);
 
 export default function AdminLayout() {
   return (
@@ -21,6 +43,7 @@ export default function AdminLayout() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerRight: () => <LogoutButton />, // 👈 Add this
       }}
     >
       <Tabs.Screen
