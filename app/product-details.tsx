@@ -1,139 +1,124 @@
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   View,
   Text,
-  Pressable,
-  StyleSheet,
-  ScrollView,
   Image,
+  ScrollView,
+  StyleSheet,
+  Pressable,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/utils/api';
 
-import AshwagandhaImage from '../assets/images/ashwagandha-powder.png';
-import NeemOilImage from '../assets/images/neem-oil.png';
-import AloeVeraGelImage from '../assets/images/aloeveragel.png';
-import TulsiTeaImage from '../assets/images/Tulsi-Tea.png';
-
-const product = {
-  name: 'Ashwagandha',
-  image: AshwagandhaImage,
-  description: 'Ashwagandha is an ancient medicinal herb with multiple health benefits...',
-  benefits: 'Reduces stress and anxiety, boosts energy, improves concentration.',
-  usage: 'Take 1-2 capsules daily after meals or as directed by your physician.',
-  price: '₹250',
-};
-
-const relatedProducts = [
-  { id: '1', name: 'Tulsi Tea', image:TulsiTeaImage },
-  { id: '2', name: 'Neem Oil', image:NeemOilImage },
-  { id: '3', name: 'Aloe Vera Gel', image:AloeVeraGelImage },
-];
+const { width } = Dimensions.get('window');
 
 export default function ProductDetails() {
-  const [tab, setTab] = useState<'Description' | 'Benefits' | 'Usage'>('Description');
+  const { product } = useLocalSearchParams();
+  const [data, setData] = useState<any>(null);
+  const [related, setRelated] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (product) {
+      const parsed = JSON.parse(decodeURIComponent(product as string));
+      setData(parsed);
+      loadRelated(parsed._id);
+    }
+  }, [product]);
+
+  const loadRelated = async (id: string) => {
+    const res = await apiGet('/products');
+    if (res?.products) {
+      const others = res.products.filter((p: any) => p._id !== id).slice(0, 5);
+      setRelated(others);
+    }
+  };
 
   const handleAddToCart = () => {
     Alert.alert('Success', 'Added to cart!');
-    // TODO: Add to real cart state later
   };
 
   const handleBuyNow = () => {
     Alert.alert('Proceeding to checkout...');
-    // TODO: Navigate to checkout screen
   };
 
-  const renderTabContent = () => {
-    switch (tab) {
-      case 'Description':
-        return <Text style={styles.tabText}>{product.description}</Text>;
-      case 'Benefits':
-        return <Text style={styles.tabText}>{product.benefits}</Text>;
-      case 'Usage':
-        return <Text style={styles.tabText}>{product.usage}</Text>;
-      default:
-        return null;
-    }
-  };
+  if (!data) return <Text style={{ margin: 20 }}>Loading...</Text>;
+
+  const { name, images, description, benefits, usage, price, stock, createdAt } = data;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <ScrollView contentContainerStyle={styles.container}>
-          {/* Product Image */}
-         <Image source={typeof product.image === 'string' ? { uri: product.image } : product.image}
-              style={styles.image}
-            />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Image
+          source={{ uri: images?.[0] || 'https://via.placeholder.com/300' }}
+          style={styles.image}
+        />
+        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.price}>₹{price}</Text>
 
-          {/* Product Name & Price */}
-          <Text style={styles.name}>{product.name}</Text>
-          <Text style={styles.price}>{product.price}</Text>
-
-          {/* Tabs */}
-          <View style={styles.tabs}>
-            {['Description', 'Benefits', 'Usage'].map((label) => (
-              <Pressable
-                key={label}
-                style={[styles.tabButton, tab === label && styles.tabButtonActive]}
-                onPress={() => setTab(label as any)}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    tab === label && styles.tabButtonTextActive,
-                  ]}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Tab Content */}
-          <View style={styles.tabContent}>{renderTabContent()}</View>
-
-          {/* Related Products */}
-          <Text style={styles.heading}>Related Products</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {relatedProducts.map((rp) => (
-              <View key={rp.id} style={styles.relatedCard}>
-                <Image source={typeof rp.image === 'string' ? { uri: rp.image } : rp.image}
-                      style={styles.relatedImage}
-                    />
-
-                <Text style={styles.relatedName}>{rp.name}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </ScrollView>
-
-        {/* Action Buttons */}
-        <View style={styles.actions}>
-          <Pressable style={styles.addToCart} onPress={handleAddToCart}>
-            <Text style={styles.addToCartText}>Add to Cart</Text>
-          </Pressable>
-          <Pressable style={styles.buyNow} onPress={handleBuyNow}>
-            <Text style={styles.buyNowText}>Buy Now</Text>
-          </Pressable>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>Stock: {stock}</Text>
+          <Text style={styles.meta}>
+            Added: {new Date(createdAt).toLocaleDateString()}
+          </Text>
         </View>
+
+        <Text style={styles.sectionTitle}>Description</Text>
+        <Text style={styles.sectionText}>{description}</Text>
+
+        <Text style={styles.sectionTitle}>Benefits</Text>
+        <Text style={styles.sectionText}>{benefits}</Text>
+
+        <Text style={styles.sectionTitle}>Usage</Text>
+        <Text style={styles.sectionText}>{usage}</Text>
+
+        <Text style={styles.sectionTitle}>More Products</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {related.map((item) => (
+        <Pressable
+          key={item._id}
+          style={styles.relatedCard}
+          onPress={() =>
+            router.push({
+              pathname: '/product-details',
+              params: { product: encodeURIComponent(JSON.stringify(item)) },
+            })
+          }
+        >
+          <Image
+            source={{ uri: item.images?.[0] || 'https://via.placeholder.com/100' }}
+            style={styles.relatedImage}
+          />
+          <Text style={styles.relatedName}>{item.name}</Text>
+          <Text style={styles.relatedPrice}>₹{item.price}</Text>
+        </Pressable>
+        ))}
+        </ScrollView>
+      </ScrollView>
+
+      <View style={styles.actions}>
+        <Pressable style={styles.addToCart} onPress={handleAddToCart}>
+          <Text style={styles.actionText}>Add to Cart</Text>
+        </Pressable>
+        <Pressable style={styles.buyNow} onPress={handleBuyNow}>
+          <Text style={styles.actionText}>Buy Now</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   container: {
     padding: 16,
-    paddingBottom: 120, // enough space for sticky buttons
+    paddingBottom: 140,
   },
   image: {
     width: '100%',
     height: 220,
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 16,
   },
   name: {
@@ -145,92 +130,78 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#4CAF50',
-    marginBottom: 16,
+    marginVertical: 8,
   },
-  tabs: {
+  metaRow: {
     flexDirection: 'row',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-    alignItems: 'center',
+  meta: {
+    fontSize: 14,
+    color: '#777',
   },
-  tabButtonActive: {
-    borderBottomColor: '#4CAF50',
-  },
-  tabButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  tabButtonTextActive: {
-    color: '#4CAF50',
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 4,
   },
-  tabContent: {
-    marginBottom: 24,
-  },
-  tabText: {
-    fontSize: 16,
+  sectionText: {
+    fontSize: 15,
     lineHeight: 22,
     color: '#444',
   },
-  heading: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-    color: '#333',
-  },
   relatedCard: {
+    width: 120,
     marginRight: 12,
     alignItems: 'center',
+    padding: 6,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
   },
   relatedImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 6,
     marginBottom: 6,
   },
   relatedName: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
-    color: '#333',
+  },
+  relatedPrice: {
+    fontSize: 12,
+    color: '#4CAF50',
   },
   actions: {
     position: 'absolute',
     bottom: 0,
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
     width: '100%',
+    padding: 16,
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fff',
   },
   addToCart: {
     flex: 1,
     backgroundColor: '#FF9800',
-    marginRight: 8,
-    paddingVertical: 16,
+    marginRight: 10,
+    paddingVertical: 14,
     borderRadius: 8,
   },
   buyNow: {
     flex: 1,
     backgroundColor: '#4CAF50',
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 8,
   },
-  addToCartText: {
+  actionText: {
     textAlign: 'center',
     color: '#fff',
-    fontWeight: '700',
     fontSize: 16,
-  },
-  buyNowText: {
-    textAlign: 'center',
-    color: '#fff',
     fontWeight: '700',
-    fontSize: 16,
   },
 });

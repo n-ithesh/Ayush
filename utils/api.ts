@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.194.36:5000/api'; // ⚠️ Use your local IP
+const BASE_URL = 'http://172.17.4.138:5000/api'; // ⚠️ Use your local IP
 
 // Save token to AsyncStorage
 export const saveToken = async (token: string) => {
@@ -114,6 +114,40 @@ export const apiDelete = async (path: string, auth = false) => {
     };
   } catch (error: any) {
     console.error('API DELETE error:', error.message);
+    return {
+      success: false,
+      msg: 'Network error',
+    };
+  }
+};
+
+// ✅ PUT API request
+export const apiPut = async (path: string, body: any, auth = false) => {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (auth) {
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    return {
+      ...data,
+      success: response.ok,
+      status: response.status,
+    };
+  } catch (error: any) {
+    console.error('API PUT error:', error.message);
     return {
       success: false,
       msg: 'Network error',
