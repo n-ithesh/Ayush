@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 
 exports.createProduct = async (req, res) => {
   try {
+    console.log('Incoming product:', req.body); 
     const product = new Product(req.body);
     await product.save();
     res.status(201).json({ success: true, product });

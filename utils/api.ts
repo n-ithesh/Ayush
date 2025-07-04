@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://172.17.4.138:5000/api'; // ⚠️ Use your local IP
+const BASE_URL = 'http://192.168.68.36:5000/api'; // ⚠️ Use your local IP
 
 // Save token to AsyncStorage
 export const saveToken = async (token: string) => {

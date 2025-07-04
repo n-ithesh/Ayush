@@ -273,7 +273,7 @@ export default function Products() {
             placeholder={{ label: 'Select Category', value: '' }}
             items={[
               { label: 'Oil', value: 'Oil' },
-              { label: 'Tablet', value: 'Tablet' },
+              { label: 'Tablet', value: 'Tablets' },
               { label: 'Syrup', value: 'Syrup' },
               { label: 'Powder', value: 'Powder' },
               { label: 'Capsule', value: 'Capsule' },
