@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,36 +10,49 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getCart, updateCart } from '@/utils/cart';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-const mockCartItems = [
-  { id: '1', name: 'Ashwagandha', price: 250, quantity: 1, image: 'https://via.placeholder.com/100' },
-  { id: '2', name: 'Tulsi Tea', price: 180, quantity: 2, image: 'https://via.placeholder.com/100' },
-];
 
 export default function Cart() {
-  const [cartItems, setCartItems] = useState(mockCartItems);
+  const router = useRouter();
+  const [cartItems, setCartItems] = useState<any[]>([]);
   const [coupon, setCoupon] = useState('');
   const [address, setAddress] = useState('');
   const [payment, setPayment] = useState('COD');
 
-  const increaseQuantity = (id: string) => {
-    const updated = cartItems.map(item =>
-      item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-    );
-    setCartItems(updated);
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  const loadCart = async () => {
+    const cart = await getCart();
+    setCartItems(cart);
   };
 
-  const decreaseQuantity = (id: string) => {
+  const increaseQuantity = async (id: string) => {
     const updated = cartItems.map(item =>
-      item.id === id && item.quantity > 1
+      item._id === id ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    setCartItems(updated);
+    await updateCart(updated);
+  };
+
+  const decreaseQuantity = async (id: string) => {
+    const updated = cartItems.map(item =>
+      item._id === id && item.quantity > 1
         ? { ...item, quantity: item.quantity - 1 }
         : item
     );
     setCartItems(updated);
+    await updateCart(updated);
   };
 
-  const applyCoupon = () => {
-    Alert.alert('Coupon Applied', `Coupon "${coupon}" applied!`);
+  const removeItem = async (id: string) => {
+    const updated = cartItems.filter(item => item._id !== id);
+    setCartItems(updated);
+    await updateCart(updated);
   };
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -57,26 +70,39 @@ export default function Cart() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.heading}>Your Cart</Text>
+      {/* Top Bar with Back Button */}
+      <View style={styles.topBar}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Ionicons name="arrow-back" size={24} color="#4CAF50" />
+        </Pressable>
+        <Text style={styles.topBarTitle}>Your Cart</Text>
+      </View>
 
+      <View style={styles.container}>
         <FlatList
           data={cartItems}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View style={styles.cartItem}>
-              <Image source={{ uri: item.image }} style={styles.image} />
+              <Image
+                source={{ uri: item.images?.[0] || 'https://via.placeholder.com/300' }}
+                style={styles.image}
+              />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.price}>₹{item.price}</Text>
 
                 <View style={styles.quantityRow}>
-                  <Pressable onPress={() => decreaseQuantity(item.id)} style={styles.qtyBtn}>
+                  <Pressable onPress={() => decreaseQuantity(item._id)} style={styles.qtyBtn}>
                     <Text style={styles.qtyBtnText}>−</Text>
                   </Pressable>
                   <Text style={styles.qtyValue}>{item.quantity}</Text>
-                  <Pressable onPress={() => increaseQuantity(item.id)} style={styles.qtyBtn}>
+                  <Pressable onPress={() => increaseQuantity(item._id)} style={styles.qtyBtn}>
                     <Text style={styles.qtyBtnText}>+</Text>
+                  </Pressable>
+
+                  <Pressable onPress={() => removeItem(item._id)} style={styles.removeBtn}>
+                    <Text style={styles.removeBtnText}>Remove</Text>
                   </Pressable>
                 </View>
               </View>
@@ -84,19 +110,6 @@ export default function Cart() {
           )}
           ListFooterComponent={
             <>
-              <Text style={styles.sectionTitle}>Coupon Code</Text>
-              <View style={styles.row}>
-                <TextInput
-                  placeholder="Enter coupon code"
-                  value={coupon}
-                  onChangeText={setCoupon}
-                  style={styles.input}
-                />
-                <Pressable style={styles.couponBtn} onPress={applyCoupon}>
-                  <Text style={styles.couponBtnText}>Apply</Text>
-                </Pressable>
-              </View>
-
               <Text style={styles.sectionTitle}>Delivery Address</Text>
               <TextInput
                 placeholder="Enter full address"
@@ -161,15 +174,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  backBtn: {
+    padding: 8,
+    marginRight: 12,
+  },
+  backText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  topBarTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+  },
   container: {
     flex: 1,
     padding: 16,
-  },
-  heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#333',
   },
   cartItem: {
     flexDirection: 'row',
@@ -178,18 +208,57 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
   },
-  image: { width: 80, height: 80, borderRadius: 8 },
-  name: { fontSize: 16, fontWeight: '600', marginBottom: 4, color: '#333' },
-  price: { fontSize: 14, fontWeight: '500', color: '#4CAF50' },
-  quantityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#333',
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4CAF50',
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   qtyBtn: {
     backgroundColor: '#4CAF50',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
   },
-  qtyBtnText: { color: '#fff', fontWeight: '700', fontSize: 18 },
-  qtyValue: { marginHorizontal: 12, fontSize: 16, fontWeight: '600' },
+  qtyBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 18,
+  },
+  qtyValue: {
+    marginHorizontal: 12,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  removeBtn: {
+    marginLeft: 'auto',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: '#e53935',
+    marginLeft: 10,
+  },
+  removeBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
+  },
   sectionTitle: {
     marginTop: 20,
     marginBottom: 8,
@@ -197,7 +266,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
   },
-  row: { flexDirection: 'row', alignItems: 'center' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -206,14 +278,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
   },
-  couponBtn: {
-    marginLeft: 8,
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-  },
-  couponBtnText: { color: '#fff', fontWeight: '600' },
   paymentBtn: {
     flex: 1,
     borderWidth: 1,

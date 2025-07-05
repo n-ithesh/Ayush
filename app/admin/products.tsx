@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from '@/utils/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
+import { getImageUrl } from '@/utils/api';
 import RNPickerSelect from 'react-native-picker-select';
 import {
   Alert,
@@ -85,21 +86,54 @@ export default function Products() {
       Alert.alert('Permission required', 'Please allow media library access to select images.');
       return;
     }
-
+  
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsMultipleSelection: true,
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
     });
-
-    if (!result.canceled) {
-      const newUris = result.assets.map((asset) => asset.uri);
-      setForm((prevForm) => ({
-        ...prevForm,
-        images: [...prevForm.images, ...newUris],
-      }));
+  
+    if (!result.canceled && result.assets?.length > 0) {
+      const formData = new FormData();
+  
+      for (const asset of result.assets) {
+        const localUri = asset.uri;
+        const filename = localUri.split('/').pop() || `image-${Date.now()}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+  
+        formData.append('images', {
+          uri: localUri,
+          name: filename,
+          type,
+        } as any);
+      }
+  
+      try {
+        const res = await fetch('http://192.168.68.36:5000/api/products/upload', {
+          method: 'POST',
+          body: formData,
+          
+        });
+  
+        const data = await res.json();
+  
+        if (data?.urls?.length > 0) {
+          setForm((prevForm) => ({
+            ...prevForm,
+            images: [...prevForm.images, ...data.urls],
+          }));
+        } else {
+          Alert.alert('Upload Failed', 'Image upload did not return valid URLs.');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        Alert.alert('Upload Error', 'Something went wrong during upload');
+      }
     }
   };
+  
+  
 
   const removeImage = (index: number) => {
     setForm((prev) => ({
@@ -217,15 +251,9 @@ export default function Products() {
             </Pressable>
 
             <Image
-              source={{
-                uri:
-                  item.images.length > 0
-                    ? item.images[0]
-                    : 'https://via.placeholder.com/100',
-              }}
-              style={styles.productImage}
-            />
-
+                source={{ uri: getImageUrl(item.images[0]) }}
+                style={styles.productImage}
+              />
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.meta}>₹{item.price}</Text>

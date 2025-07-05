@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { apiGet } from '@/utils/api';
+import { addToCart } from '@/utils/cart';
+
 
 const { width } = Dimensions.get('window');
 
@@ -36,9 +38,16 @@ export default function ProductDetails() {
     }
   };
 
-  const handleAddToCart = () => {
-    Alert.alert('Success', 'Added to cart!');
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(data);
+      Alert.alert('Added to Cart', `${data.name} has been added.`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add item to cart.');
+      console.error(error);
+    }
   };
+  
 
   const handleBuyNow = () => {
     Alert.alert('Proceeding to checkout...');
@@ -51,10 +60,12 @@ export default function ProductDetails() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Image
-          source={{ uri: images?.[0] || 'https://via.placeholder.com/300' }}
-          style={styles.image}
-        />
+      <Image
+        source={{ uri: images?.[0] || 'https://via.placeholder.com/300' }}
+        style={styles.image}
+        resizeMode="contain"
+      />
+
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.price}>₹{price}</Text>
 
@@ -117,10 +128,11 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 220,
-    borderRadius: 10,
-    marginBottom: 16,
+    height: 250,
+    resizeMode: 'contain',
+    backgroundColor: 'rgb(255, 255, 255)',
   },
+  
   name: {
     fontSize: 24,
     fontWeight: '700',

@@ -13,6 +13,8 @@ import { Picker } from '@react-native-picker/picker';
 
 import { router } from 'expo-router';
 import { apiGet } from '@/utils/api';
+import { getImageUrl } from '@/utils/api';
+
 
 const { width } = Dimensions.get('window');
 
@@ -25,7 +27,9 @@ export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPrice, setSelectedPrice] = useState('');
 
-  const categories = ['All', 'Oil',
+  const categories = [
+        'All',
+        'Oil',
         'Tablets',
         'Syrup',
         'Powder',
@@ -91,11 +95,13 @@ export default function Products() {
       style={isGrid ? styles.gridCard : styles.listCard}
     >
       <Image
-        source={{
-          uri: item.images?.[0] || 'https://via.placeholder.com/150',
-        }}
-        style={isGrid ? styles.gridImage : styles.listImage}
-      />
+          source={{
+            uri: getImageUrl(item.images?.[0]),
+          }}
+          style={isGrid ? styles.gridImage : styles.listImage}
+          resizeMode="contain" // or "cover"
+        />
+
       <View style={styles.cardContent}>
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productPrice}>₹{item.price}</Text>
@@ -240,8 +246,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
-  gridImage: { width: (width / 2) - 24, height: 120 },
-  listImage: { width: 120, height: 120 },
+  gridImage: {
+    width: (width / 2) - 24,
+    height: 140,
+    resizeMode: 'contain',
+    backgroundColor: '#fff',
+    alignSelf: 'center',
+  },
+  listImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    backgroundColor: '#fff',
+    alignSelf: 'center',
+  },
+  
   cardContent: { flex: 1, padding: 12 },
   productName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
   productPrice: { fontSize: 14, color: '#4CAF50' },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,41 +8,38 @@ import {
   Pressable,
   StyleSheet,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
-// ✅ Proper static imports for local images:
-import AshwagandhaImage from '../../assets/images/ashwagandha-powder.png';
-import NeemOilImage from '../../assets/images/neem-oil.png';
-import AloeVeraGelImage from '../../assets/images/aloeveragel.png';
-import TulsiTeaImage from '../../assets/images/Tulsi-Tea.png';
-
-// ✅ Sample data
-const categories = ['Herbs', 'Oils', 'Supplements', 'Tea', 'Skincare'];
-
-const featured = [
-  { id: '1', title: 'Ashwagandha', image: AshwagandhaImage },
-  { id: '2', title: 'Neem Oil', image: NeemOilImage },
-  { id: '3', title: 'Tulsi Tea', image: TulsiTeaImage },
-];
-
-const offers = [
-  { id: '1', title: '20% off on Pooja Kits' },
-  { id: '2', title: 'Buy 1 Get 1 Free - Herbal Tea' },
-];
+import { apiGet, getImageUrl } from '@/utils/api';
 
 export default function Home() {
   const [search, setSearch] = useState('');
+  const [featured, setFeatured] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Helper for consistent image source:
-  const getImageSource = (image: any) =>
-    typeof image === 'string' ? { uri: image } : image;
+  const categories = ['Herbs', 'Oils', 'Supplements', 'Tea', 'Skincare'];
+
+  const offers = [
+    { id: '1', title: '20% off on Pooja Kits' },
+    { id: '2', title: 'Buy 1 Get 1 Free - Herbal Tea' },
+  ];
+
+  useEffect(() => {
+    fetchFeatured();
+  }, []);
+
+  const fetchFeatured = async () => {
+    const res = await apiGet('/products'); // Adjust path if needed
+    if (res.success && Array.isArray(res.products)) {
+      setFeatured(res.products.slice(0, 5)); // Show top 5 as featured
+    }
+    setLoading(false);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* ✅ Search Bar */}
         <TextInput
           placeholder="Search products..."
           value={search}
@@ -50,21 +47,23 @@ export default function Home() {
           style={styles.search}
         />
 
-        {/* ✅ Featured Carousel */}
         <Text style={styles.heading}>Featured Products</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {featured.map((item) => (
-            <View key={item.id} style={styles.featuredCard}>
-              <Image
-                source={getImageSource(item.image)}
-                style={styles.featuredImage}
-              />
-              <Text style={styles.featuredTitle}>{item.title}</Text>
-            </View>
-          ))}
-        </ScrollView>
+        {loading ? (
+          <ActivityIndicator size="large" color="#4CAF50" />
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {featured.map((item: any) => (
+              <View key={item._id} style={styles.featuredCard}>
+                <Image
+                  source={{ uri: getImageUrl(item.images?.[0]) }}
+                  style={styles.featuredImage}
+                />
+                <Text style={styles.featuredTitle}>{item.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
 
-        {/* ✅ Categories */}
         <Text style={styles.heading}>Categories</Text>
         <FlatList
           data={categories}
@@ -78,7 +77,6 @@ export default function Home() {
           )}
         />
 
-        {/* ✅ Special Offers */}
         <Text style={styles.heading}>Special Offers</Text>
         {offers.map((offer) => (
           <View key={offer.id} style={styles.offerCard}>
@@ -86,7 +84,6 @@ export default function Home() {
           </View>
         ))}
 
-        {/* ✅ Quick Access to Pooja */}
         <Pressable style={styles.poojaButton}>
           <Text style={styles.poojaButtonText}>Book a Pooja Service</Text>
         </Pressable>
@@ -124,6 +121,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#eee',
   },
   featuredTitle: {
     fontSize: 14,
