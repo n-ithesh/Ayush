@@ -10,11 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-
-import { router } from 'expo-router';
-import { apiGet } from '@/utils/api';
-import { getImageUrl } from '@/utils/api';
-
+import { useLocalSearchParams, router } from 'expo-router';
+import { apiGet, getImageUrl } from '@/utils/api';
 
 const { width } = Dimensions.get('window');
 
@@ -23,28 +20,38 @@ export default function Products() {
   const [isGrid, setIsGrid] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
-
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPrice, setSelectedPrice] = useState('');
 
   const categories = [
-        'All',
-        'Oil',
-        'Tablets',
-        'Syrup',
-        'Powder',
-        'Capsule',
-        'Health Supplement',
-        'Juice',
-        'Churna',
-        'Paste',
-        'Soap',
-        'Other',
-        'Tonic'];
+    'All',
+    'Oil',
+    'Tablets',
+    'Syrup',
+    'Powder',
+    'Capsule',
+    'Health Supplement',
+    'Juice',
+    'Churna',
+    'Paste',
+    'Soap',
+    'Other',
+    'Tonic',
+  ];
+
+  const { search: searchParam } = useLocalSearchParams();
 
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (searchParam) {
+      const query = Array.isArray(searchParam) ? searchParam[0] : searchParam;
+      setSearch(query);
+      applyFilters(query, selectedCategory, selectedPrice);
+    }
+  }, [searchParam, products]);
 
   const loadProducts = async () => {
     const res = await apiGet('/products');
@@ -59,22 +66,25 @@ export default function Products() {
     applyFilters(search, selectedCategory, selectedPrice);
   };
 
-  const applyFilters = (searchValue = search, category = selectedCategory, price = selectedPrice) => {
+  const applyFilters = (
+    searchValue = search,
+    category = selectedCategory,
+    price = selectedPrice
+  ) => {
     let filtered = [...products];
 
-    // Search filter
     if (searchValue.trim()) {
       filtered = filtered.filter((p) =>
         p.name.toLowerCase().includes(searchValue.toLowerCase())
       );
     }
 
-    // Category filter
     if (category && category !== 'All') {
-      filtered = filtered.filter((p) => p.category?.toLowerCase() === category.toLowerCase());
+      filtered = filtered.filter(
+        (p) => p.category?.toLowerCase() === category.toLowerCase()
+      );
     }
 
-    // Price filter
     if (price) {
       filtered = filtered.filter((p) => {
         if (price === '<200') return p.price < 200;
@@ -95,13 +105,10 @@ export default function Products() {
       style={isGrid ? styles.gridCard : styles.listCard}
     >
       <Image
-          source={{
-            uri: getImageUrl(item.images?.[0]),
-          }}
-          style={isGrid ? styles.gridImage : styles.listImage}
-          resizeMode="contain" // or "cover"
-        />
-
+        source={{ uri: getImageUrl(item.images?.[0]) }}
+        style={isGrid ? styles.gridImage : styles.listImage}
+        resizeMode="contain"
+      />
       <View style={styles.cardContent}>
         <Text style={styles.productName}>{item.name}</Text>
         <Text style={styles.productPrice}>₹{item.price}</Text>
@@ -111,7 +118,6 @@ export default function Products() {
 
   return (
     <View style={styles.container}>
-      {/* Search */}
       <View style={styles.searchRow}>
         <TextInput
           placeholder="Search products..."
@@ -124,7 +130,6 @@ export default function Products() {
         </Pressable>
       </View>
 
-      {/* Filters */}
       <View style={styles.filterRow}>
         <View style={styles.pickerWrapper}>
           <Text style={styles.filterLabel}>Category:</Text>
@@ -160,14 +165,12 @@ export default function Products() {
         </View>
       </View>
 
-      {/* View Toggle */}
       <View style={styles.actions}>
         <Pressable onPress={() => setIsGrid(!isGrid)} style={styles.actionButton}>
           <Text style={styles.actionText}>{isGrid ? 'List View' : 'Grid View'}</Text>
         </Pressable>
       </View>
 
-      {/* Product List */}
       <FlatList
         data={filteredProducts}
         key={isGrid ? 'G' : 'L'}
@@ -198,7 +201,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   searchButtonText: { color: '#fff' },
-
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -217,7 +219,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
-
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -230,7 +231,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   actionText: { color: '#fff' },
-
   gridCard: {
     flex: 1,
     margin: 6,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   gridImage: {
-    width: (width / 2) - 24,
+    width: width / 2 - 24,
     height: 140,
     resizeMode: 'contain',
     backgroundColor: '#fff',
@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignSelf: 'center',
   },
-  
   cardContent: { flex: 1, padding: 12 },
   productName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
   productPrice: { fontSize: 14, color: '#4CAF50' },

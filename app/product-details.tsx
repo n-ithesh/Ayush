@@ -1,18 +1,18 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-  Alert,
-  Dimensions,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
 import { apiGet } from '@/utils/api';
 import { addToCart } from '@/utils/cart';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Dimensions,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const { width } = Dimensions.get('window');
@@ -50,9 +50,14 @@ export default function ProductDetails() {
   
 
   const handleBuyNow = () => {
-    Alert.alert('Proceeding to checkout...');
+    router.push({
+      pathname: '/checkout',
+      params: {
+        product: encodeURIComponent(JSON.stringify(data)),
+      },
+    });
   };
-
+  
   if (!data) return <Text style={{ margin: 20 }}>Loading...</Text>;
 
   const { name, images, description, benefits, usage, price, stock, createdAt } = data;

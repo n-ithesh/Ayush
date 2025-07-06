@@ -1,42 +1,38 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-
-// Mock orders — replace with API response later!
-const orders = [
-  {
-    id: 'ORD123',
-    status: 'Delivered',
-    total: 680,
-    items: [
-      { productId: '1', name: 'Ashwagandha', price: 250, quantity: 1 },
-      { productId: '2', name: 'Tulsi Tea', price: 180, quantity: 2 },
-    ],
-  },
-  {
-    id: 'ORD124',
-    status: 'Shipped',
-    total: 200,
-    items: [
-      { productId: '4', name: 'Aloe Vera Gel', price: 200, quantity: 1 },
-    ],
-  },
-];
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/utils/api';
 
 export default function Orders() {
-  const renderOrder = ({ item }: { item: typeof orders[0] }) => (
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const res = await apiGet('/orders/my', true); // ✅ Auth required
+      if (res.success && res.orders) {
+        setOrders(res.orders);
+      }
+      setLoading(false);
+    };
+
+    fetchOrders();
+  }, []);
+
+  const renderOrder = ({ item }: { item: any }) => (
     <View style={styles.orderCard}>
-      <Text style={styles.orderId}>Order ID: {item.id}</Text>
+      <Text style={styles.orderId}>Order ID: {item._id}</Text>
       <Text style={styles.orderStatus}>Status: {item.status}</Text>
 
-      {item.items.map((prod) => (
-        <View key={prod.productId} style={styles.productRow}>
+      {item.items.map((prod: any) => (
+        <View key={prod.product._id} style={styles.productRow}>
           <Text style={styles.productName}>
-            {prod.name} x{prod.quantity}
+            {prod.product.name} x{prod.quantity}
           </Text>
-          <Text style={styles.productPrice}>₹{prod.price}</Text>
+          <Text style={styles.productPrice}>₹{prod.product.price}</Text>
         </View>
       ))}
 
-      <Text style={styles.total}>Total: ₹{item.total}</Text>
+      <Text style={styles.total}>Total: ₹{item.totalAmount}</Text>
     </View>
   );
 
@@ -44,12 +40,21 @@ export default function Orders() {
     <View style={styles.container}>
       <Text style={styles.heading}>My Orders</Text>
 
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id}
-        renderItem={renderOrder}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#4CAF50" />
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => item._id}
+          renderItem={renderOrder}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>
+              No orders yet.
+            </Text>
+          }
+        />
+      )}
     </View>
   );
 }

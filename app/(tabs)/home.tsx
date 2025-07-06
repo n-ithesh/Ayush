@@ -1,90 +1,141 @@
+import { apiGet, getImageUrl } from '@/utils/api';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Image,
   ActivityIndicator,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiGet, getImageUrl } from '@/utils/api';
+
+const { width } = Dimensions.get('window');
 
 export default function Home() {
   const [search, setSearch] = useState('');
-  const [featured, setFeatured] = useState([]);
+  const [featured, setFeatured] = useState<any[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [userName, setUserName] = useState('');
+  const router = useRouter();
 
-  const categories = ['Herbs', 'Oils', 'Supplements', 'Tea', 'Skincare'];
+  const fadeAnim = new Animated.Value(0);
 
-  const offers = [
-    { id: '1', title: '20% off on Pooja Kits' },
-    { id: '2', title: 'Buy 1 Get 1 Free - Herbal Tea' },
+  const categories = [
+    { name: 'Herbs', icon: 'leaf' },
+    { name: 'Oils', icon: 'oil-can' },
+    { name: 'Supplements', icon: 'pills' },
+    { name: 'Tea', icon: 'mug-hot' },
+    { name: 'Skincare', icon: 'spa' },
   ];
 
   useEffect(() => {
-    fetchFeatured();
+    fetchData();
+    fetchUser();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
-  const fetchFeatured = async () => {
-    const res = await apiGet('/products'); // Adjust path if needed
+  const fetchData = async () => {
+    setLoading(true);
+    const res = await apiGet('/products');
     if (res.success && Array.isArray(res.products)) {
-      setFeatured(res.products.slice(0, 5)); // Show top 5 as featured
+      setFeatured(res.products.slice(0, 5));
     }
     setLoading(false);
   };
 
+  const fetchUser = async () => {
+    const res = await apiGet('/auth/me', true); // ✅ pass `true` to enable auth
+    console.log('User fetched:', res); // optional: debug
+    if (res.success && res.user) {
+      setUserName(res.user.name);
+    }
+  };
+  
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
+  const handleSearchSubmit = () => {
+    if (search.trim()) {
+      router.push(`/products?search=${encodeURIComponent(search)}`);
+    }
+  };
+
+  const goToProductDetails = (product: any) => {
+    setRecentlyViewed((prev) => [product, ...prev.slice(0, 4)]);
+    router.push({
+      pathname: '/product-details',
+      params: { product: encodeURIComponent(JSON.stringify(product)) },
+    });
+  };
+
+  const greeting = (() => {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good Morning🌞' : hour < 18 ? 'Good Afternoon⛅' : 'Good Evening🌚';
+  })();
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <Text style={styles.greeting}>{greeting}</Text>
+
         <TextInput
           placeholder="Search products..."
           value={search}
           onChangeText={setSearch}
+          onSubmitEditing={handleSearchSubmit}
           style={styles.search}
         />
 
-        <Text style={styles.heading}>Featured Products</Text>
+        <Animated.Text style={[styles.heading]}>Featured Products</Animated.Text>
         {loading ? (
           <ActivityIndicator size="large" color="#4CAF50" />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {featured.map((item: any) => (
-              <View key={item._id} style={styles.featuredCard}>
-                <Image
-                  source={{ uri: getImageUrl(item.images?.[0]) }}
-                  style={styles.featuredImage}
-                />
+            {featured.map((item) => (
+              <Pressable key={item._id} style={styles.featuredCard} onPress={() => goToProductDetails(item)}>
+                <Image source={{ uri: getImageUrl(item.images?.[0]) }} style={styles.featuredImage} />
                 <Text style={styles.featuredTitle}>{item.name}</Text>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         )}
 
-        <Text style={styles.heading}>Categories</Text>
+        <Animated.Text style={[styles.heading]}>Categories</Animated.Text>
         <FlatList
           data={categories}
           horizontal
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item.name}
           renderItem={({ item }) => (
             <Pressable style={styles.categoryTile}>
-              <Text style={styles.categoryText}>{item}</Text>
+              <FontAwesome5 name={item.icon} size={16} color="#fff" />
+              <Text style={styles.categoryText}>{item.name}</Text>
             </Pressable>
           )}
         />
 
-        <Text style={styles.heading}>Special Offers</Text>
-        {offers.map((offer) => (
-          <View key={offer.id} style={styles.offerCard}>
-            <Text style={styles.offerText}>{offer.title}</Text>
-          </View>
-        ))}
-
-        <Pressable style={styles.poojaButton}>
+        <Pressable style={styles.poojaButton} onPress={() => router.push('/pooja-booking')}>
           <Text style={styles.poojaButtonText}>Book a Pooja Service</Text>
         </Pressable>
       </ScrollView>
@@ -97,19 +148,25 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
   },
+  greeting: {
+    fontSize: 22,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#4CAF50',
+  },
   search: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 20,
+    marginBottom: 10,
     backgroundColor: '#f9f9f9',
   },
   heading: {
     fontSize: 20,
     fontWeight: '700',
     marginVertical: 12,
-    color: '#333',
+    color: 'balck',
   },
   featuredCard: {
     marginRight: 16,
@@ -133,20 +190,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
     marginRight: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   categoryText: {
     color: '#fff',
     fontWeight: '600',
-  },
-  offerCard: {
-    backgroundColor: '#E8F5E9',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  offerText: {
-    fontSize: 16,
-    color: '#333',
+    marginLeft: 6,
   },
   poojaButton: {
     backgroundColor: '#4CAF50',
