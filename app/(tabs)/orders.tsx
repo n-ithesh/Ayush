@@ -1,38 +1,88 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, Pressable, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
-import { apiGet } from '@/utils/api';
+import { apiGet, apiPut, getImageUrl } from '@/utils/api';
 
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const res = await apiGet('/orders/my', true); // ✅ Auth required
-      if (res.success && res.orders) {
-        setOrders(res.orders);
-      }
-      setLoading(false);
-    };
-
     fetchOrders();
   }, []);
 
+  const fetchOrders = async () => {
+    setLoading(true);
+    const res = await apiGet('/orders/my', true); // ✅ Auth required
+    if (res.success && res.orders) {
+      setOrders(res.orders);
+    }
+    setLoading(false);
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            const res = await apiPut(`/orders/${orderId}/status`, { status: 'Cancelled' }, true);
+            if (res.success) {
+              fetchOrders(); // Refresh orders
+              Alert.alert('Order cancelled successfully.');
+            } else {
+              Alert.alert('Failed to cancel order.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const renderOrder = ({ item }: { item: any }) => (
     <View style={styles.orderCard}>
-      <Text style={styles.orderId}>Order ID: {item._id}</Text>
       <Text style={styles.orderStatus}>Status: {item.status}</Text>
 
       {item.items.map((prod: any) => (
-        <View key={prod.product._id} style={styles.productRow}>
+  <View key={prod.product?._id || Math.random()} style={styles.productRow}>
+    {prod.product ? (
+      <>
+        <Image
+          source={{
+            uri:
+              Array.isArray(prod.product.images) && prod.product.images.length > 0
+                ? getImageUrl(prod.product.images[0])
+                : 'https://via.placeholder.com/100',
+          }}
+          style={styles.productImage}
+        />
+        <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={styles.productName}>
             {prod.product.name} x{prod.quantity}
           </Text>
           <Text style={styles.productPrice}>₹{prod.product.price}</Text>
         </View>
+      </>
+    ) : (
+      <Text style={{ color: 'red' }}>Product info not available</Text>
+    )}
+  </View>
       ))}
 
+
       <Text style={styles.total}>Total: ₹{item.totalAmount}</Text>
+
+      {(item.status !== 'Cancelled' && item.status !== 'Delivered') && (
+        <Pressable
+          style={styles.cancelButton}
+          onPress={() => cancelOrder(item._id)}
+        >
+          <Text style={styles.cancelButtonText}>Cancel Order</Text>
+        </Pressable>
+      )}
     </View>
   );
 
@@ -49,9 +99,7 @@ export default function Orders() {
           renderItem={renderOrder}
           contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>
-              No orders yet.
-            </Text>
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>No orders yet.</Text>
           }
         />
       )}
@@ -70,7 +118,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  orderId: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
   orderStatus: {
     fontSize: 14,
     color: '#4CAF50',
@@ -78,16 +125,34 @@ const styles = StyleSheet.create({
   },
   productRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  productName: { fontSize: 14, color: '#333' },
-  productPrice: { fontSize: 14, fontWeight: '600', color: '#333' },
+  productImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  productName: { fontSize: 14, fontWeight: '600', color: '#333' },
+  productPrice: { fontSize: 14, color: '#666', marginTop: 4 },
   total: {
     marginTop: 10,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'right',
-    color: '#333',
+    color: '#000',
+  },
+  cancelButton: {
+    marginTop: 12,
+    backgroundColor: '#f44336',
+    paddingVertical: 10,
+    borderRadius: 6,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

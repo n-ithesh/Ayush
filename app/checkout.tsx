@@ -22,10 +22,19 @@ export default function Checkout() {
   const [user, setUser] = useState({ name: '', email: '', phone: '' });
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [upiId, setUpiId] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+
 
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editedUser, setEditedUser] = useState({ name: '', email: '', phone: '', address: '' });
+  const [editedUser, setEditedUser] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
 
   useEffect(() => {
     fetchUser();
@@ -59,15 +68,33 @@ export default function Checkout() {
       Alert.alert('Please enter a shipping address.');
       return;
     }
-
+  
+    if (paymentMethod === 'UPI') {
+      if (!upiId.trim()) {
+        Alert.alert('Please enter your UPI ID.');
+        return;
+      }
+  
+      // Basic UPI format validation (e.g., name@bank)
+      const upiRegex = /^[\w.\-]{2,256}@[a-zA-Z]{2,64}$/;
+      if (!upiRegex.test(upiId.trim())) {
+        Alert.alert('Invalid UPI ID format.');
+        return;
+      }
+  
+      // Dummy UPI payment success
+      Alert.alert('Payment Successful', 'Your UPI payment has been received.');
+    }
+  
     const orderData = {
-      items: [{ product: parsed._id, quantity: 1 }],
+      items: [{ product: parsed._id, quantity }],
       shippingAddress: address,
       paymentMethod,
-      totalAmount: parsed.price,
+      totalAmount: parsed.price * quantity,
     };
-
+  
     const res = await apiPost('/orders', orderData, true);
+  
     if (res.success) {
       Alert.alert('Order placed successfully!');
       router.replace('/orders');
@@ -75,6 +102,7 @@ export default function Checkout() {
       Alert.alert('Error', res.msg || 'Order failed');
     }
   };
+  
 
   const handleSaveUser = async () => {
     if (!editedUser.name || !editedUser.email || !editedUser.phone || !editedUser.address) {
@@ -130,7 +158,24 @@ export default function Checkout() {
             style={{ width: 140, height: 140, borderRadius: 8 }}
           />
           <Text style={{ fontSize: 20, fontWeight: '700', marginTop: 8 }}>{parsed.name}</Text>
-          <Text style={{ fontSize: 18, color: '#4CAF50' }}>₹{parsed.price}</Text>
+          <Text style={{ fontSize: 18, color: '#4CAF50' }}>
+            ₹{parsed.price} x {quantity} = ₹{parsed.price * quantity}
+          </Text>
+        </View>
+
+        {/* Quantity Selector */}
+        <Text style={styles.label}>Quantity</Text>
+        <View style={styles.quantityBox}>
+          <Pressable
+            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+            style={styles.qtyBtn}
+          >
+            <Text style={styles.qtyText}>-</Text>
+          </Pressable>
+          <Text style={styles.qtyNumber}>{quantity}</Text>
+          <Pressable onPress={() => setQuantity((q) => q + 1)} style={styles.qtyBtn}>
+            <Text style={styles.qtyText}>+</Text>
+          </Pressable>
         </View>
 
         {/* User Info */}
@@ -174,6 +219,31 @@ export default function Checkout() {
           ))}
         </View>
 
+        {/* UPI Input */}
+        {paymentMethod === 'UPI' && !paymentCompleted && (
+          <View style={{ marginTop: 10 }}>
+            <Text style={styles.label}>Enter UPI ID</Text>
+            <TextInput
+              style={styles.input}
+              value={upiId}
+              onChangeText={setUpiId}
+              placeholder="example@upi"
+            />
+            <Pressable
+              style={[styles.button, { marginTop: 14 }]}
+              onPress={() => {
+                Alert.alert('Payment Successful', 'Your UPI payment has been received.');
+                setPaymentCompleted(true); // Hide UPI block
+                handlePlaceOrder();        // Place the order
+              }}
+            >
+              <Text style={styles.buttonText}>Pay Now</Text>
+            </Pressable>
+          </View>
+        )}
+
+
+        {/* Place Order */}
         <Pressable style={styles.button} onPress={handlePlaceOrder}>
           <Text style={styles.buttonText}>Place Order</Text>
         </Pressable>
@@ -327,5 +397,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     fontSize: 16,
+  },
+  quantityBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 16,
+  },
+  qtyBtn: {
+    backgroundColor: '#eee',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  qtyText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  qtyNumber: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCart, updateCart } from '@/utils/cart';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { getImageUrl } from '@/utils/api';
 
 
 export default function Cart() {
@@ -85,7 +86,12 @@ export default function Cart() {
           renderItem={({ item }) => (
             <View style={styles.cartItem}>
               <Image
-                source={{ uri: item.images?.[0] || 'https://via.placeholder.com/300' }}
+                source={{
+                  uri:
+                    Array.isArray(item.images) && item.images.length > 0
+                      ? getImageUrl(item.images[0])
+                      : 'https://via.placeholder.com/300',
+                }}
                 style={styles.image}
               />
               <View style={{ flex: 1, marginLeft: 12 }}>

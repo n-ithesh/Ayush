@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getImageUrl } from '@/utils/api';
 
 
 const { width } = Dimensions.get('window');
@@ -66,10 +67,16 @@ export default function ProductDetails() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={styles.container}>
       <Image
-        source={{ uri: images?.[0] || 'https://via.placeholder.com/300' }}
-        style={styles.image}
-        resizeMode="contain"
-      />
+          source={{
+            uri:
+              Array.isArray(data.images) && data.images.length > 0
+                ? getImageUrl(data.images[0])
+                : 'https://via.placeholder.com/300',
+          }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+
 
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.price}>₹{price}</Text>
@@ -103,8 +110,13 @@ export default function ProductDetails() {
             })
           }
         >
-          <Image
-            source={{ uri: item.images?.[0] || 'https://via.placeholder.com/100' }}
+           <Image
+        source={{
+          uri:
+            Array.isArray(item.images) && item.images.length > 0
+              ? getImageUrl(item.images[0])
+              : 'https://via.placeholder.com/100',
+        }}
             style={styles.relatedImage}
           />
           <Text style={styles.relatedName}>{item.name}</Text>

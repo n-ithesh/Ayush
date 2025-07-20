@@ -110,7 +110,7 @@ export default function Products() {
       }
   
       try {
-        const res = await fetch('http://192.168.68.36:5000/api/products/upload', {
+        const res = await fetch('http://192.168.204.36:5000/api/products/upload', {
           method: 'POST',
           body: formData,
           

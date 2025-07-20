@@ -1,61 +1,82 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { apiGet } from '@/utils/api';
 
 export default function Dashboard() {
   const [productCount, setProductCount] = useState(0);
-
-  const mockStats = {
-    orders: 45,
-    revenue: 27500,
-    lowStockAlerts: [
-      { name: 'Tulsi Drops', quantity: 3 },
-      { name: 'Ayur Face Cream', quantity: 1 },
-    ],
-  };
+  const [orderCount, setOrderCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProductCount();
+    loadStats();
   }, []);
 
-  const fetchProductCount = async () => {
+  const loadStats = async () => {
+    setLoading(true);
+
     try {
-      const res = await apiGet('/products');
-      if (res?.products) {
-        setProductCount(res.products.length);
+      const prodRes = await apiGet('/products', true);
+      const orderStats = await apiGet('/orders/stats', true);
+
+      if (prodRes.success) {
+        setProductCount(prodRes.products.length);
       }
-    } catch (err) {
-      console.error('Failed to load product count', err);
+
+      if (orderStats.success) {
+        setOrderCount(orderStats.totalOrders || 0);
+        setTotalRevenue(orderStats.totalRevenue || 0);
+        setRecentActivities(orderStats.recentActivities || []);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard stats', error);
     }
+
+    setLoading(false);
   };
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Admin Dashboard</Text>
 
-      {/* Summary Cards */}
-      <View style={styles.row}>
-        <StatCard icon={<Ionicons name="cube-outline" size={24} color="#fff" />} label="Products" value={productCount} />
-        <StatCard icon={<FontAwesome5 name="shopping-cart" size={20} color="#fff" />} label="Orders" value={mockStats.orders} />
-        <StatCard icon={<MaterialIcons name="attach-money" size={26} color="#fff" />} label="Revenue" value={`₹${mockStats.revenue}`} />
-      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#4CAF50" />
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <View style={styles.row}>
+            <StatCard
+              icon={<Ionicons name="cube-outline" size={24} color="#fff" />}
+              label="Products"
+              value={productCount}
+            />
+            <StatCard
+              icon={<FontAwesome5 name="shopping-cart" size={20} color="#fff" />}
+              label="Orders"
+              value={orderCount}
+            />
+            <StatCard
+              icon={<MaterialIcons name="attach-money" size={26} color="#fff" />}
+              label="Revenue"
+              value={`₹${totalRevenue}`}
+            />
+          </View>
 
-      {/* Recent Activity */}
-      <Text style={styles.subheading}>Recent Activity</Text>
-      <View style={styles.card}>
-        <Text>✓ New order received</Text>
-        <Text>✓ 3 products updated</Text>
-        <Text>✓ 1 user registered</Text>
-      </View>
-
-      {/* Alerts */}
-      <Text style={styles.subheading}>Alerts</Text>
-      {mockStats.lowStockAlerts.map((item, index) => (
-        <View key={index} style={styles.alert}>
-          <Text style={{ color: 'red' }}>{item.name} is low in stock ({item.quantity} left)</Text>
-        </View>
-      ))}
+          {/* Recent Activity */}
+          <Text style={styles.subheading}>Recent Activity</Text>
+          <View style={styles.card}>
+            {recentActivities.length === 0 ? (
+              <Text>No recent activity</Text>
+            ) : (
+              recentActivities.map((item: any, idx) => (
+                <Text key={idx}>• {item.message}</Text>
+              ))
+            )}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -70,7 +91,7 @@ const StatCard = ({ icon, label, value }) => (
 
 const styles = StyleSheet.create({
   container: { padding: 16 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
   subheading: { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   statCard: {
@@ -83,6 +104,9 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: 20, fontWeight: 'bold', color: '#fff', marginTop: 8 },
   statLabel: { color: '#fff', marginTop: 4 },
-  card: { backgroundColor: '#f0f0f0', padding: 16, borderRadius: 12 },
-  alert: { backgroundColor: '#ffe6e6', padding: 10, borderRadius: 8, marginBottom: 6 },
+  card: {
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+    borderRadius: 12,
+  },
 });

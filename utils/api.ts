@@ -1,15 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.68.36:5000/api'; // ⚠️ Use your local IP
+const BASE_URL = 'http://192.168.204.36:5000/api'; // ⚠️ Use your local IP
 
 
-const IMAGE_BASE_URL = 'http://192.168.68.36:5000/uploads';
+const IMAGE_BASE_URL = 'http://192.168.204.36:5000/uploads';
 
 // ✅ Utility to generate full image URL
-export const getImageUrl = (filename?: string) => {
-  if (!filename) return 'https://via.placeholder.com/150';
-  return filename.startsWith('http') ? filename : `${IMAGE_BASE_URL}/${filename}`;
+export const getImageUrl = (path?: string) => {
+  if (!path) return 'https://via.placeholder.com/150';
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/uploads')) return `http://192.168.204.36:5000${path}`;
+  return `http://192.168.204.36:5000/uploads/${path}`;
 };
+
 
 
 // Save token to AsyncStorage

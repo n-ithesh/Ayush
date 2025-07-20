@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { apiPost, saveToken } from '@/utils/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,9 +16,13 @@ export default function Login() {
 
     // Admin Shortcut
     if (email === 'admin@ayush.com' && password === 'admin123') {
+      await AsyncStorage.setItem('authToken', 'admin-token'); // ✅ correct key
+      await AsyncStorage.setItem('isAdmin', 'true');
       router.replace('/admin/dashboard');
       return;
     }
+    
+    
 
     const data = await apiPost('/auth/login', { email, password });
 

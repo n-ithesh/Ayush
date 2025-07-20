@@ -4,6 +4,21 @@ const Product = require('./models/Product'); // Adjust the path if needed
 // 🟢 Replace this with your MongoDB Atlas connection string
 const MONGO_URI = 'mongodb+srv://nithesh975:U9umMhiNy2FnxNTp@ayush.dftgduc.mongodb.net/?retryWrites=true&w=majority&appName=Ayush';
 
+
+// 🖼️ Map base product name → image path (must match /uploads files)
+const imageMap = {
+  'Ashwagandha Capsules': ['/uploads/ashwagandha.png'],
+  'Triphala Juice': ['/uploads/triphala.png'],
+  'Chyawanprash': ['/uploads/chyawanprash.png'],
+  'Neem Tablets': ['/uploads/neem.png'],
+  'Brahmi Syrup': ['/uploads/brahmi.png'],
+  'Shatavari Powder': ['/uploads/shatavari.png'],
+  'Karela Juice': ['/uploads/karela.png'],
+  'Moringa Tablets': ['/uploads/moringa.jpeg'],
+  'Ayurvedic Hair Oil': ['/uploads/hairoil.jpeg'],
+  'Digestive Churna': ['/uploads/churna.png'],
+};
+
 // Sample Ayurvedic products (10 base items)
 const baseProducts = [
   {
@@ -108,7 +123,7 @@ for (let i = 0; i < 5; i++) {
       name: `${prod.name} - Batch ${i + 1}`,
       price: prod.price + Math.floor(Math.random() * 50),
       stock: prod.stock + Math.floor(Math.random() * 25),
-      images: [], // 🔴 BLANK for now
+      images: imageMap[prod.name] || [],
       featured: Math.random() > 0.7,
     });
   });

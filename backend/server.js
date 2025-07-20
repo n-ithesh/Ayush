@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/products');
 
 
+
 const path = require('path');
 
 // Serve uploaded images statically
@@ -26,6 +27,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/poojas', require('./routes/pooja'));
+
+
 
 
 // Error handling middleware
