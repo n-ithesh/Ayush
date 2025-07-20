@@ -56,7 +56,7 @@ export default function Poojas() {
 
       <FlatList
         data={poojas}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item: any) => item._id}
         contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
           <View style={styles.card}>

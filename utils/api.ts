@@ -118,7 +118,21 @@ export const apiDelete = async (path: string, auth = false) => {
       headers,
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type');
+    
+    // 🔐 Check if response is JSON
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text(); // get raw text (e.g., HTML)
+      console.error('Expected JSON, got:', text);
+      return {
+        success: false,
+        msg: 'Invalid server response',
+        raw: text,
+      };
+    }
 
     return {
       ...data,
@@ -133,6 +147,7 @@ export const apiDelete = async (path: string, auth = false) => {
     };
   }
 };
+
 
 // ✅ PUT API request
 export const apiPut = async (path: string, body: any, auth = false) => {
