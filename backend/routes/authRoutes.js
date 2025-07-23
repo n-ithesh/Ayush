@@ -12,4 +12,5 @@ router.post('/update-address', auth, authController.updateAddress);
 router.delete('/delete-address/:index', auth, authController.deleteAddress);
 router.post('/upload-profile-picture', auth, authController.uploadProfilePicture);
 
+
 module.exports = router;

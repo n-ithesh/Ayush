@@ -1,173 +1,241 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Alert,
+  View, Text, Pressable, StyleSheet, FlatList, TextInput,
+  Alert, ActivityIndicator, Platform, ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-const services = [
-  { id: '1', name: 'Ganahoma', description: 'A ritual to invoke Lord Ganesha for blessings.' },
-  { id: '2', name: 'Navagraha Pooja', description: 'A pooja to appease the nine planetary gods.' },
-  { id: '3', name: 'Lakshmi Pooja', description: 'A ritual to seek prosperity from Goddess Lakshmi.' },
-];
+import { apiGet, apiPost } from '@/utils/api';
 
 export default function PoojaBooking() {
   const [step, setStep] = useState(1);
-
+  const [poojas, setPoojas] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState<'date' | 'time' | null>(null);
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [user, setUser] = useState<any>(null);
 
-  const nextStep = () => {
-    if (step === 1 && !selectedService) {
-      Alert.alert('Select a service first!');
-      return;
+  useEffect(() => {
+    fetchPoojas();
+    fetchUser();
+  }, []);
+
+  const fetchPoojas = async () => {
+    try {
+      const res = await apiGet('/poojas');
+      setPoojas(res.data);
+    } catch (err) {
+      Alert.alert('Failed to load poojas');
+    } finally {
+      setLoading(false);
     }
-    if (step === 3 && !location) {
-      Alert.alert('Please enter location.');
-      return;
+  };
+
+  const fetchUser = async () => {
+    try {
+      const res = await apiGet('/auth/me');
+      setUser(res.user);
+    } catch (err) {
+      Alert.alert('Failed to load user data');
     }
-    setStep(step + 1);
   };
 
   const prevStep = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const confirmBooking = () => {
-    Alert.alert(
-      'Booking Confirmed!',
-      `Service: ${selectedService.name}\nDate: ${date.toDateString()}\nLocation: ${location}\nNotes: ${notes}`
-    );
-    // TODO: Send to backend
-    // Reset flow
-    setStep(1);
-    setSelectedService(null);
-    setLocation('');
-    setNotes('');
+  const confirmBooking = async () => {
+    try {
+      const payload = {
+        pooja: selectedService._id,
+        name: user?.name,
+        email: user?.email,
+        phone: user?.phone,
+        address: location,
+        poojaDate: date.toISOString(), // full datetime
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        notes,
+      };
+  
+      const res = await apiPost('/bookings', payload,true);
+      if (res.success) {
+        Alert.alert('Booking Confirmed!', 'Thank you for booking.');
+        setStep(1);
+        setSelectedService(null);
+        setLocation('');
+        setNotes('');
+      } else {
+        console.log('Booking response:', res);
+        Alert.alert('Booking failed', res?.message || 'Server didn’t respond properly.');        
+      }
+    } catch (err) {
+      Alert.alert('Something went wrong!');
+    }
   };
+  
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Book a Pooja</Text>
 
-      {step === 1 && (
+      {loading ? (
+        <ActivityIndicator size="large" color="#4CAF50" />
+      ) : (
         <>
-          <Text style={styles.subHeading}>Step 1: Select a Service</Text>
-          <FlatList
-            data={services}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+          {step === 1 && (
+            <>
+              <Text style={styles.subHeading}>Available Poojas</Text>
+              <FlatList
+                data={poojas}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <View style={styles.serviceCard}>
+                    <Text style={styles.serviceName}>{item.name}</Text>
+                    <Text style={styles.serviceDetail}><Text style={styles.bold}>Description:</Text> {item.description}</Text>
+                    <Text style={styles.serviceDetail}><Text style={styles.bold}>Price:</Text> ₹{item.price}</Text>
+                    <Text style={styles.serviceDetail}><Text style={styles.bold}>Duration:</Text> {item.duration} mins</Text>
+                    {item.requirements?.length > 0 && (
+                      <Text style={styles.serviceDetail}>
+                        <Text style={styles.bold}>Requirements:</Text> {item.requirements.join(', ')}
+                      </Text>
+                    )}
+                    <Pressable
+                      style={styles.bookNowButton}
+                      onPress={() => {
+                        setSelectedService(item);
+                        setStep(2);
+                      }}
+                    >
+                      <Text style={styles.bookNowText}>Book Now</Text>
+                    </Pressable>
+                  </View>
+                )}
+              />
+            </>
+          )}
+
+{step === 2 && (
+  <>
+    <Text style={styles.subHeading}>Select Date & Time</Text>
+
+    <Pressable style={styles.dateButton} onPress={() => setShowDatePicker('date')}>
+      <Text style={styles.dateButtonText}>
+        Select Date: {date.toDateString()}
+      </Text>
+    </Pressable>
+
+    <Pressable style={styles.dateButton} onPress={() => setShowDatePicker('time')}>
+      <Text style={styles.dateButtonText}>
+        Select Time: {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </Text>
+    </Pressable>
+
+    {showDatePicker === 'date' && (
+      <DateTimePicker
+        value={date}
+        mode="date"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        minimumDate={new Date()}
+        onChange={(event, selectedDate) => {
+          if (Platform.OS === 'android') setShowDatePicker(null);
+          if (selectedDate) {
+            const newDate = new Date(date);
+            newDate.setFullYear(selectedDate.getFullYear());
+            newDate.setMonth(selectedDate.getMonth());
+            newDate.setDate(selectedDate.getDate());
+            setDate(newDate);
+          }
+        }}
+      />
+    )}
+
+    {showDatePicker === 'time' && (
+      <DateTimePicker
+        value={date}
+        mode="time"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        onChange={(event, selectedTime) => {
+          if (Platform.OS === 'android') setShowDatePicker(null);
+          if (selectedTime) {
+            const newDate = new Date(date);
+            newDate.setHours(selectedTime.getHours());
+            newDate.setMinutes(selectedTime.getMinutes());
+            newDate.setSeconds(0);
+            setDate(newDate);
+          }
+        }}
+      />
+    )}
+
+    <Pressable
+      style={styles.bookNowButton}
+      onPress={() => {
+        if (date < new Date()) {
+          Alert.alert('Invalid time', 'Please select a future date and time');
+          return;
+        }
+        setStep(3);
+      }}
+    >
+      <Text style={styles.bookNowText}>Continue</Text>
+    </Pressable>
+  </>
+)}
+
+
+          {step === 3 && (
+            <>
+              <Text style={styles.subHeading}>Location & Notes</Text>
+              <TextInput
+                placeholder="Enter Location"
+                value={location}
+                onChangeText={setLocation}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Additional Requirements (optional)"
+                value={notes}
+                onChangeText={setNotes}
+                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                multiline
+              />
               <Pressable
-                style={[
-                  styles.serviceCard,
-                  selectedService?.id === item.id && styles.serviceCardActive,
-                ]}
-                onPress={() => setSelectedService(item)}
+                style={styles.bookNowButton}
+                onPress={() => setStep(4)}
               >
-                <Text style={styles.serviceName}>{item.name}</Text>
-                <Text style={styles.serviceDesc}>{item.description}</Text>
+                <Text style={styles.bookNowText}>Continue</Text>
               </Pressable>
-            )}
-          />
-        </>
-      )}
+            </>
+          )}
 
-      {step === 2 && (
-        <>
-          <Text style={styles.subHeading}>Step 2: Select Date</Text>
-          <Pressable
-            style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.dateButtonText}>
-              {date.toDateString()}
-            </Text>
-          </Pressable>
+          {step === 4 && (
+            <>
+              <Text style={styles.subHeading}>Summary</Text>
+              <View style={styles.summary}>
+                <Text style={styles.summaryText}><Text style={styles.bold}>Service:</Text> {selectedService?.name}</Text>
+                <Text style={styles.summaryText}><Text style={styles.bold}>Date:</Text> {date.toDateString()}</Text>
+                <Text style={styles.summaryText}><Text style={styles.bold}>Time:</Text> {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                <Text style={styles.summaryText}><Text style={styles.bold}>Location:</Text> {location}</Text>
+                {notes ? <Text style={styles.summaryText}><Text style={styles.bold}>Notes:</Text> {notes}</Text> : null}
+              </View>
+              <Pressable
+                style={styles.bookButton}
+                onPress={confirmBooking}
+              >
+                <Text style={styles.buttonText}>Book</Text>
+              </Pressable>
+            </>
+          )}
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="calendar"
-              onChange={(event, selected) => {
-                const currentDate = selected || date;
-                setShowDatePicker(false);
-                setDate(currentDate);
-              }}
-            />
+          {step > 1 && (
+            <Pressable style={styles.backButton} onPress={prevStep}>
+              <Text style={styles.buttonText}>Back</Text>
+            </Pressable>
           )}
         </>
       )}
-
-      {step === 3 && (
-        <>
-          <Text style={styles.subHeading}>Step 3: Location & Notes</Text>
-          <TextInput
-            placeholder="Enter Location"
-            value={location}
-            onChangeText={setLocation}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Additional Requirements (optional)"
-            value={notes}
-            onChangeText={setNotes}
-            style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-            multiline
-          />
-        </>
-      )}
-
-      {step === 4 && (
-        <>
-          <Text style={styles.subHeading}>Step 4: Summary</Text>
-          <View style={styles.summary}>
-            <Text style={styles.summaryText}>
-              <Text style={styles.bold}>Service:</Text> {selectedService.name}
-            </Text>
-            <Text style={styles.summaryText}>
-              <Text style={styles.bold}>Date:</Text> {date.toDateString()}
-            </Text>
-            <Text style={styles.summaryText}>
-              <Text style={styles.bold}>Location:</Text> {location}
-            </Text>
-            {notes ? (
-              <Text style={styles.summaryText}>
-                <Text style={styles.bold}>Notes:</Text> {notes}
-              </Text>
-            ) : null}
-          </View>
-        </>
-      )}
-
-      {/* Controls */}
-      <View style={styles.controls}>
-        {step > 1 && (
-          <Pressable style={styles.backButton} onPress={prevStep}>
-            <Text style={styles.buttonText}>Back</Text>
-          </Pressable>
-        )}
-
-        {step < 4 && (
-          <Pressable style={styles.nextButton} onPress={nextStep}>
-            <Text style={styles.buttonText}>Next</Text>
-          </Pressable>
-        )}
-
-        {step === 4 && (
-          <Pressable style={styles.bookButton} onPress={confirmBooking}>
-            <Text style={styles.buttonText}>Book</Text>
-          </Pressable>
-        )}
-      </View>
     </View>
   );
 }
@@ -180,21 +248,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  serviceCardActive: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#E8F5E9',
-  },
   serviceName: { fontSize: 18, fontWeight: '700', marginBottom: 6 },
-  serviceDesc: { fontSize: 14, color: '#555' },
+  serviceDetail: { fontSize: 14, color: '#555', marginBottom: 4 },
+  bold: { fontWeight: '700' },
+  bookNowButton: {
+    marginTop: 12,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  bookNowText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   dateButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 20,
   },
   dateButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   input: {
@@ -209,37 +287,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
     padding: 16,
+    marginBottom: 20,
   },
-  summaryText: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#333',
-  },
-  bold: { fontWeight: '700' },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
+  summaryText: { fontSize: 16, marginBottom: 8, color: '#333' },
+  bookButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   backButton: {
     backgroundColor: '#FF9800',
-    flex: 1,
-    marginRight: 8,
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  nextButton: {
-    backgroundColor: '#4CAF50',
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  bookButton: {
-    backgroundColor: '#4CAF50',
-    flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },

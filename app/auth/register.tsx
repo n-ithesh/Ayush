@@ -7,7 +7,9 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { apiPost } from '../../utils/api';
 
@@ -18,6 +20,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword || !phone || !address) {
@@ -64,8 +68,8 @@ export default function Register() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Customers only</Text>
+      <Text style={styles.title}> Create Account</Text>
+      <Text style={styles.subtitle}>Join Ayush today</Text>
 
       <TextInput
         placeholder="Full Name"
@@ -81,20 +85,49 @@ export default function Register() {
         keyboardType="email-address"
         style={styles.input}
       />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+
+      {/* Password */}
+      <View style={styles.passwordRow}>
+        <TextInput
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          style={[styles.input, { flex: 1 }]}
+        />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.eyeButton}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off' : 'eye'}
+            size={22}
+            color="#555"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Confirm Password */}
+      <View style={styles.passwordRow}>
+        <TextInput
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={!showConfirmPassword}
+          style={[styles.input, { flex: 1 }]}
+        />
+        <TouchableOpacity
+          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          style={styles.eyeButton}
+        >
+          <Ionicons
+            name={showConfirmPassword ? 'eye-off' : 'eye'}
+            size={22}
+            color="#555"
+          />
+        </TouchableOpacity>
+      </View>
+
       <TextInput
         placeholder="Phone Number"
         value={phone}
@@ -125,38 +158,49 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f7fa',
     flexGrow: 1,
     justifyContent: 'center',
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 4,
     textAlign: 'center',
-    color: '#333',
+    color: '#2c3e50',
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 32,
+    marginBottom: 24,
     textAlign: 'center',
-    color: '#666',
+    color: '#7f8c8d',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
     padding: 14,
-    borderRadius: 8,
-    marginBottom: 16,
+    borderRadius: 10,
+    borderColor: '#ccc',
+    borderWidth: 1,
     fontSize: 16,
     color: '#333',
+    marginBottom: 16,
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  eyeButton: {
+    padding: 12,
+    marginLeft: -40,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#27ae60',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 10,
+    marginTop: 4,
     marginBottom: 20,
+    elevation: 2,
   },
   buttonText: {
     textAlign: 'center',
@@ -165,8 +209,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   link: {
-    color: '#4CAF50',
+    color: '#2980b9',
     textAlign: 'center',
     fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

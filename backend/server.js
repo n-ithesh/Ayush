@@ -28,6 +28,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/poojas', require('./routes/pooja'));
+app.use('/api/admin', require('./routes/admin'));
+const bookingsRoutes = require('./routes/poojaBookingRoutes');
+app.use('/api/bookings', bookingsRoutes);
+
+
+
 
 
 

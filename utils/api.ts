@@ -1,16 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.204.36:5000/api'; // ⚠️ Use your local IP
+const BASE_URL = 'http://192.168.189.36:5000/api'; // ⚠️ Use your local IP
 
 
-const IMAGE_BASE_URL = 'http://192.168.204.36:5000/uploads';
+const IMAGE_BASE_URL = 'http://192.168.189.36:5000/uploads';
 
 // ✅ Utility to generate full image URL
 export const getImageUrl = (path?: string) => {
   if (!path) return 'https://via.placeholder.com/150';
   if (path.startsWith('http')) return path;
-  if (path.startsWith('/uploads')) return `http://192.168.204.36:5000${path}`;
-  return `http://192.168.204.36:5000/uploads/${path}`;
+  if (path.startsWith('/uploads')) return `http://192.168.189.36:5000${path}`;
+  return `http://192.168.189.36:5000/uploads/${path}`;
 };
 
 
@@ -39,7 +39,7 @@ export const apiPost = async (path: string, body: any, auth = false) => {
   const headers: any = {
     'Content-Type': 'application/json',
   };
-
+  
   if (auth) {
     const token = await getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -176,6 +176,40 @@ export const apiPut = async (path: string, body: any, auth = false) => {
     };
   } catch (error: any) {
     console.error('API PUT error:', error.message);
+    return {
+      success: false,
+      msg: 'Network error',
+    };
+  }
+};
+
+// ✅ PATCH API request
+export const apiPatch = async (path: string, body: any, auth = false) => {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (auth) {
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    return {
+      ...data,
+      success: response.ok,
+      status: response.status,
+    };
+  } catch (error: any) {
+    console.error('API PATCH error:', error.message);
     return {
       success: false,
       msg: 'Network error',

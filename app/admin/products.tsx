@@ -110,7 +110,7 @@ export default function Products() {
       }
   
       try {
-        const res = await fetch('http://192.168.204.36:5000/api/products/upload', {
+        const res = await fetch('http://192.168.189.36:5000/api/products/upload', {
           method: 'POST',
           body: formData,
           
@@ -285,16 +285,43 @@ export default function Products() {
         </Pressable>
       )}
 
-      <Modal visible={modalVisible} animationType="slide">
-        <ScrollView style={styles.modal}>
-          <Text style={styles.modalTitle}>
-            {editingId ? 'Edit Product' : 'Add Product'}
-          </Text>
+<Modal visible={modalVisible} animationType="slide" transparent>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalCard}>
+      <ScrollView contentContainerStyle={styles.modalScroll}>
+        <Text style={styles.modalTitle}>
+          {editingId ? 'Edit Product' : 'Add Product'}
+        </Text>
 
-          <TextInput placeholder="Name" style={styles.input} value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
-          <TextInput placeholder="Price" keyboardType="numeric" style={styles.input} value={form.price} onChangeText={(v) => setForm({ ...form, price: v })} />
-          <TextInput placeholder="Stock" keyboardType="numeric" style={styles.input} value={form.stock} onChangeText={(v) => setForm({ ...form, stock: v })} />
-          <Text style={{ marginBottom: 6, fontWeight: 'bold' }}>Category</Text>
+        {/* Name */}
+        <TextInput
+          placeholder="Product Name"
+          style={styles.input}
+          value={form.name}
+          onChangeText={(v) => setForm({ ...form, name: v })}
+        />
+
+        {/* Price */}
+        <TextInput
+          placeholder="Price"
+          keyboardType="numeric"
+          style={styles.input}
+          value={form.price}
+          onChangeText={(v) => setForm({ ...form, price: v })}
+        />
+
+        {/* Stock */}
+        <TextInput
+          placeholder="Stock"
+          keyboardType="numeric"
+          style={styles.input}
+          value={form.stock}
+          onChangeText={(v) => setForm({ ...form, stock: v })}
+        />
+
+        {/* Category */}
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.pickerWrapper}>
           <RNPickerSelect
             onValueChange={(value) => setForm({ ...form, category: value })}
             value={form.category}
@@ -313,96 +340,202 @@ export default function Products() {
               { label: 'Other', value: 'Other' },
             ]}
           />
-          <TextInput placeholder="Description" style={styles.input} multiline value={form.description} onChangeText={(v) => setForm({ ...form, description: v })} />
-          <TextInput placeholder="Benefits" style={styles.input} multiline value={form.benefits} onChangeText={(v) => setForm({ ...form, benefits: v })} />
-          <TextInput placeholder="Usage" style={styles.input} multiline value={form.usage} onChangeText={(v) => setForm({ ...form, usage: v })} />
+        </View>
 
-          <Pressable onPress={pickImages} style={styles.imageBtn}>
-            <Ionicons name="image" size={20} color="#fff" />
-            <Text style={{ color: '#fff' }}>Select Images</Text>
-          </Pressable>
+        {/* Description, Benefits, Usage */}
+        <TextInput
+          placeholder="Description"
+          style={styles.textArea}
+          multiline
+          value={form.description}
+          onChangeText={(v) => setForm({ ...form, description: v })}
+        />
+        <TextInput
+          placeholder="Benefits"
+          style={styles.textArea}
+          multiline
+          value={form.benefits}
+          onChangeText={(v) => setForm({ ...form, benefits: v })}
+        />
+        <TextInput
+          placeholder="Usage"
+          style={styles.textArea}
+          multiline
+          value={form.usage}
+          onChangeText={(v) => setForm({ ...form, usage: v })}
+        />
 
-          <ScrollView horizontal>
-            {form.images.map((uri, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image source={{ uri }} style={styles.imageThumb} />
-                <Pressable style={styles.removeImageBtn} onPress={() => removeImage(index)}>
-                  <Ionicons name="close-circle" size={20} color="red" />
-                </Pressable>
-              </View>
-            ))}
-          </ScrollView>
+        {/* Image Picker */}
+        <Pressable onPress={pickImages} style={styles.imageBtn}>
+          <Ionicons name="image" size={20} color="#fff" />
+          <Text style={styles.imageBtnText}>Select Images</Text>
+        </Pressable>
 
-          <Pressable style={styles.saveBtn} onPress={handleSave}>
-            <Text style={styles.saveText}>{editingId ? 'Update' : 'Save'}</Text>
-          </Pressable>
-
-          <Pressable onPress={() => { setModalVisible(false); setEditingId(null); }} style={styles.cancelBtn}>
-            <Text>Cancel</Text>
-          </Pressable>
+        {/* Thumbnails */}
+        <ScrollView horizontal contentContainerStyle={{ marginVertical: 10 }}>
+          {form.images.map((uri, index) => (
+            <View key={index} style={styles.imageWrapper}>
+              <Image source={{ uri }} style={styles.imageThumb} />
+              <Pressable
+                style={styles.removeImageBtn}
+                onPress={() => removeImage(index)}
+              >
+                <Ionicons name="close-circle" size={20} color="red" />
+              </Pressable>
+            </View>
+          ))}
         </ScrollView>
-      </Modal>
+
+        {/* Buttons */}
+        <Pressable style={styles.saveBtn} onPress={handleSave}>
+          <Text style={styles.saveText}>{editingId ? 'Update' : 'Save'}</Text>
+        </Pressable>
+        <Pressable
+          style={styles.cancelBtn}
+          onPress={() => {
+            setModalVisible(false);
+            setEditingId(null);
+          }}
+        >
+          <Text style={styles.cancelText}>Cancel</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  heading: { fontSize: 22, fontWeight: 'bold', marginBottom: 12 },
-  topRow: { flexDirection: 'row', marginBottom: 10 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#000',
+    textAlign: 'center',
+  },
+  topRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
   search: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
-    padding: 8,
+    padding: 10,
+    backgroundColor: '#fafafa',
+    color: '#000',
   },
   addBtn: {
-    backgroundColor: '#00897b',
+    backgroundColor: '#4CAF50',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     marginLeft: 8,
     borderRadius: 10,
+    elevation: 2,
   },
-  addText: { color: '#fff', marginLeft: 4 },
+  addText: {
+    color: '#fff',
+    marginLeft: 4,
+    fontWeight: '600',
+  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 0.5,
-    borderColor: '#ccc',
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
-  name: { fontWeight: 'bold' },
-  meta: { fontSize: 12, color: '#666' },
-  deleteBtn: {
-    backgroundColor: 'red',
-    padding: 10,
+  name: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#000',
+  },
+  meta: {
+    fontSize: 12,
+    color: '#555',
+  },
+  productImage: {
+    width: 60,
+    height: 60,
     borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+    marginLeft: 10,
+    backgroundColor: '#e0e0e0',
   },
-  deleteText: { color: '#fff' },
-  modal: { padding: 16 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  stockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  stockBtn: {
+    padding: 4,
+  },
+  deleteBtn: {
+    backgroundColor: '#d32f2f',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  modal: {
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#000',
+    textAlign: 'center',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 10,
+    padding: 12,
     marginBottom: 12,
+    backgroundColor: '#fafafa',
+    color: '#000',
   },
   imageBtn: {
-    backgroundColor: '#00897b',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  imageThumb: { width: 60, height: 60, borderRadius: 6 },
-  imageWrapper: { position: 'relative', marginRight: 8 },
+  imageThumb: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginRight: 10,
+  },
   removeImageBtn: {
     position: 'absolute',
     top: -8,
@@ -412,32 +545,133 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveBtn: {
-    backgroundColor: '#00897b',
+    backgroundColor: '#4CAF50',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
   },
-  saveText: { color: '#fff', fontWeight: 'bold' },
-  cancelBtn: { alignItems: 'center', marginTop: 10 },
-  stockRow: { flexDirection: 'row', alignItems: 'center' },
-  stockBtn: { padding: 4 },
-  productImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 6,
-    marginLeft: 10,
-    backgroundColor: '#eee',
+  saveText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
+  cancelBtn: {
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  
+  modalCard: {
+    backgroundColor: '#fff',
+    width: '90%',
+    maxHeight: '95%',
+    borderRadius: 16,
+    padding: 16,
+    elevation: 5,
+  },
+  
+  modalScroll: {
+    paddingBottom: 30,
+  },
+  
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  
+  textArea: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    height: 80,
+    marginBottom: 12,
+    textAlignVertical: 'top',
+  },
+  
+  label: {
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  
   pickerWrapper: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
+    borderRadius: 10,
+    padding: 6,
     marginBottom: 12,
   },
-  picker: {
-    height: 48,
-    width: '100%',
+  
+  imageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2e86de',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  
+  imageBtnText: {
+    color: '#fff',
+    marginLeft: 8,
+  },
+  
+  imageWrapper: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  
+  imageThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  
+  removeImageBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+  },
+  
+  saveBtn: {
+    backgroundColor: '#28a745',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  
+  saveText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  
+  cancelBtn: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  
+  cancelText: {
+    color: '#555',
+    fontWeight: '600',
   },
   
 });
+
